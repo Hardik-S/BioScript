@@ -7,7 +7,7 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
 <section class="prototype" id="prototype" aria-labelledby="prototype-title">
   <div class="shell">
     <header class="hero">
-      <p class="kicker">Static product prototype</p>
+      <p class="kicker">Workflow demo</p>
       <h2 id="prototype-title">{prototypeContent.title}</h2>
       <p class="subtitle">{prototypeContent.subtitle}</p>
     </header>
@@ -98,7 +98,7 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
           </form>
         </section>
 
-        <section class="panel stage-panel is-visible" data-stage="saved">
+        <section class="panel stage-panel" data-stage="saved">
           <h3>Saved Incomplete State</h3>
           <p>
             Case is retained with timestamp, missing fields, and routed to reviewer queue with
@@ -186,7 +186,8 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
           </div>
         </section>
 
-        <nav class="stage-controls" aria-label="Prototype stage controls">
+        <section class="stage-controls" aria-label="Workflow views">
+          <p class="view-label">Open another workflow view</p>
           {
             prototypeContent.workflow.map((step) => (
               <button
@@ -198,7 +199,7 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
               </button>
             ))
           }
-        </nav>
+        </section>
       </div>
     </div>
   </div>
@@ -716,8 +717,18 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
     padding: 0.6rem;
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.45rem;
     background: #fcf5ec;
+  }
+
+  .view-label {
+    margin: 0 0.35rem 0 0;
+    color: #6b5b4a;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   .stage-button.is-active {
