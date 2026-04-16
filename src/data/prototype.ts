@@ -20,6 +20,22 @@ export interface IntakeField {
   placeholder: string;
 }
 
+export type FieldConfidence = "high" | "medium" | "low";
+
+export interface RawExample {
+  id: string;
+  source: string;
+  text: string;
+}
+
+export interface ExtractionRun {
+  id: string;
+  rawText: string;
+  extractedValues: Partial<Record<string, string>>;
+  fieldConfidence: Partial<Record<string, FieldConfidence>>;
+  reviewFlags?: Partial<Record<string, string>>;
+}
+
 export interface ReviewerQueueItem {
   caseId: string;
   patient: string;
@@ -53,6 +69,8 @@ export interface PrototypeContent {
   subtitle: string;
   patientContext: Record<string, string>;
   requiredFields: string[];
+  rawExamples: RawExample[];
+  extractionRuns: ExtractionRun[];
   workflow: WorkflowStep[];
   intakeFields: IntakeField[];
   queue: ReviewerQueueItem[];
@@ -64,7 +82,7 @@ export interface PrototypeContent {
 export const prototypeContent: PrototypeContent = {
   title: "Safety Intake Desk",
   subtitle:
-    "Frontline adverse-event capture with structured triage and audit-ready handoff.",
+    "AI-assisted first-mile intake: turn messy source text into a review-ready safety case draft.",
   patientContext: {
     program: "Oncology Support Program (Pilot)",
     patientRef: "PAT-REDACTED-1042",
@@ -81,7 +99,7 @@ export const prototypeContent: PrototypeContent = {
     {
       id: "intake",
       label: "Intake",
-      note: "Launch from patient context and capture minimum safety data.",
+      note: "Drop in source material, then review the model-built draft.",
     },
     {
       id: "saved",
@@ -109,19 +127,107 @@ export const prototypeContent: PrototypeContent = {
       note: "Track cycle time, completion quality, and queue age.",
     },
   ],
+  rawExamples: [
+    {
+      id: "call-note-john-doe",
+      source: "Call transcript excerpt",
+      text:
+        "9:42am inbound call from oncology support nurse (Melissa, RN-77). " +
+        "Patient John Doe says he felt chest tightness and dizziness about 30 mins after BIO-IMM-21 injection last Wednesday evening. " +
+        "Symptoms improved after rest, no ER visit reported. " +
+        "Unsure if he also took his blood pressure tablet beforehand. " +
+        "Nurse asks if this should be logged as possible AE and requests reviewer follow-up.",
+    },
+    {
+      id: "email-escalation",
+      source: "Escalation email",
+      text:
+        "Subject: possible reaction after infusion - need PV view\n\n" +
+        "From: care.coordinator@redacted.example\n" +
+        "Spoke with pt (John D.) this morning. Reports dizziness, nausea, and chest pressure after treatment. " +
+        "Mentions 'the bio immune one, 21 maybe?' so product name may be imprecise. " +
+        "Onset sounds like \"yesterday late afternoon\" relative to call today. " +
+        "Please triage and advise if we need second outreach for concomitant meds.",
+    },
+  ],
+  extractionRuns: [
+    {
+      id: "run-john-doe-call",
+      rawText:
+        "9:42am inbound call from oncology support nurse (Melissa, RN-77). " +
+        "Patient John Doe says he felt chest tightness and dizziness about 30 mins after BIO-IMM-21 injection last Wednesday evening. " +
+        "Symptoms improved after rest, no ER visit reported. " +
+        "Unsure if he also took his blood pressure tablet beforehand. " +
+        "Nurse asks if this should be logged as possible AE and requests reviewer follow-up.",
+      extractedValues: {
+        suspectProduct: "BIO-IMM-21",
+        reactionSummary:
+          "Patient reported chest tightness and dizziness about 30 minutes after injection; improved with rest.",
+        eventOnset: "2026-04-09",
+        reporterRole: "Field Nurse (RN-77)",
+        concomitantMeds: "Possible blood pressure tablet (not confirmed)",
+        notes:
+          "Model draft from inbound call transcript. Recommend reviewer confirm exact onset date and concomitant meds.",
+      },
+      fieldConfidence: {
+        suspectProduct: "high",
+        reactionSummary: "high",
+        eventOnset: "low",
+        reporterRole: "medium",
+        concomitantMeds: "low",
+        notes: "high",
+      },
+      reviewFlags: {
+        eventOnset: "Date inferred from relative phrasing: \"last Wednesday evening.\"",
+        concomitantMeds: "Medication mention was uncertain in source note.",
+      },
+    },
+    {
+      id: "run-email-escalation",
+      rawText:
+        "Subject: possible reaction after infusion - need PV view\n\n" +
+        "From: care.coordinator@redacted.example\n" +
+        "Spoke with pt (John D.) this morning. Reports dizziness, nausea, and chest pressure after treatment. " +
+        "Mentions 'the bio immune one, 21 maybe?' so product name may be imprecise. " +
+        "Onset sounds like \"yesterday late afternoon\" relative to call today. " +
+        "Please triage and advise if we need second outreach for concomitant meds.",
+      extractedValues: {
+        suspectProduct: "BIO-IMM-21 (?)",
+        reactionSummary:
+          "Patient reported dizziness, nausea, and chest pressure after treatment; severity not yet medically reviewed.",
+        eventOnset: "2026-04-14",
+        reporterRole: "Care Coordinator (email escalation)",
+        concomitantMeds: "",
+        notes:
+          "Model draft from escalation email. Product identity and onset timing need reviewer confirmation.",
+      },
+      fieldConfidence: {
+        suspectProduct: "low",
+        reactionSummary: "high",
+        eventOnset: "low",
+        reporterRole: "high",
+        concomitantMeds: "medium",
+        notes: "high",
+      },
+      reviewFlags: {
+        suspectProduct: "Product label in source was ambiguous (\"bio immune one, 21 maybe\").",
+        eventOnset: "Date inferred from relative phrase \"yesterday late afternoon.\"",
+      },
+    },
+  ],
   intakeFields: [
     {
       id: "suspectProduct",
       label: "Suspect product",
       required: true,
-      value: "BIO-IMM-21",
+      value: "",
       placeholder: "Enter product name or code",
     },
     {
       id: "reactionSummary",
       label: "Reaction summary (verbatim)",
       required: true,
-      value: "Patient reported chest tightness and dizziness after dose.",
+      value: "",
       placeholder: "Capture patient words without interpretation",
     },
     {
@@ -135,7 +241,7 @@ export const prototypeContent: PrototypeContent = {
       id: "reporterRole",
       label: "Reporter role",
       required: true,
-      value: "Nurse",
+      value: "",
       placeholder: "Reporter role",
     },
     {

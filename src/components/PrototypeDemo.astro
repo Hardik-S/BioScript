@@ -2,6 +2,8 @@
 import { prototypeContent } from "../data/prototype";
 
 const stageOrder = prototypeContent.workflow.map((step) => step.id);
+const intakeFieldOrder = prototypeContent.intakeFields.map((field) => field.id);
+const extractionRuns = prototypeContent.extractionRuns;
 ---
 
 <section class="prototype" id="prototype" aria-labelledby="prototype-title">
@@ -50,18 +52,43 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
 
         <section class="panel panel-intake" data-stage="intake">
           <div class="panel-head">
-            <h3>Potential AE Intake</h3>
-            <p>Minimum required fields are enforced before handoff readiness.</p>
+            <h3>AI-Assisted Intake</h3>
+            <p>
+              Start with unstructured source material. The model drafts a structured intake case,
+              and reviewers confirm low-confidence fields before handoff.
+            </p>
+          </div>
+
+          <div class="raw-input-shell">
+            <label class="raw-label" for="raw-intake-text">Raw intake note / call transcript / email text</label>
+            <textarea
+              id="raw-intake-text"
+              rows={8}
+              placeholder="Paste source material or run a sample extraction."
+              spellcheck="false"
+            ></textarea>
+            <div class="raw-actions">
+              <button type="button" class="run-button" data-action="run-extraction">Run extraction</button>
+              <p id="source-status">Load a sample run to simulate deterministic extraction.</p>
+            </div>
           </div>
 
           <form class="intake-form" id="prototype-intake-form" novalidate>
+            <div class="panel-subhead">
+              <h4>Extracted intake draft</h4>
+              <p>Review model-populated data and confirm uncertain fields before handoff.</p>
+            </div>
             {
               prototypeContent.intakeFields.map((field) => (
-                <label class="field" for={field.id}>
-                  <span>
+                <label class="field" data-field-id={field.id} for={field.id}>
+                  <span class="field-head">
                     {field.label}
                     {field.required ? <em>Required</em> : <small>Optional</small>}
                   </span>
+                  <div class="field-ai-meta" data-field-meta={field.id} hidden>
+                    <span class="confidence-badge" data-confidence-badge={field.id}></span>
+                    <p class="review-flag" data-review-flag={field.id}></p>
+                  </div>
                   {field.id === "reactionSummary" || field.id === "notes" ? (
                     <textarea
                       id={field.id}
@@ -85,8 +112,11 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
               ))
             }
             <div class="intake-status">
-              <p id="required-status">
-                Required fields complete: 0 / {prototypeContent.requiredFields.length}
+              <p id="required-populated-status">
+                Required fields populated: 0 / {prototypeContent.requiredFields.length}
+              </p>
+              <p id="required-trusted-status">
+                Required fields trusted for handoff: 0 / {prototypeContent.requiredFields.length}
               </p>
               <p id="draft-status">Draft has not been saved in this browser.</p>
             </div>
@@ -205,25 +235,49 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
   </div>
 </section>
 
-<script is:inline define:vars={{ stageOrder }}>
+<script is:inline define:vars={{ stageOrder, intakeFieldOrder, extractionRuns }}>
   const STORAGE_KEY = "bioscript-prototype-draft-v1";
   const root = document.getElementById("prototype");
 
   if (root) {
     let restoredDraft = false;
+    let extractionIndex = 0;
+    let hasRun = false;
+    let isAnimating = false;
+    let animationToken = 0;
+    let activeRun = null;
+
+    const modelFieldState = new Map();
     const form = root.querySelector("#prototype-intake-form");
-    const requiredStatus = root.querySelector("#required-status");
+    const rawInput = root.querySelector("#raw-intake-text");
+    const runButton = root.querySelector('[data-action="run-extraction"]');
+    const sourceStatus = root.querySelector("#source-status");
+    const requiredPopulatedStatus = root.querySelector("#required-populated-status");
+    const requiredTrustedStatus = root.querySelector("#required-trusted-status");
     const draftStatus = root.querySelector("#draft-status");
     const stageButtons = root.querySelectorAll("[data-stage-target]");
     const stagePanels = root.querySelectorAll(".stage-panel");
     const railSteps = root.querySelectorAll(".step");
     const inputs = form ? form.querySelectorAll("input, textarea") : [];
 
+    const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+    const asField = (field) =>
+      field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement ? field : null;
+
     const getRequiredCounts = () => {
-      if (!form) return { complete: 0, total: 0 };
-      const required = form.querySelectorAll("[required]");
-      const complete = [...required].filter((field) => field.value.trim().length > 0).length;
-      return { complete, total: required.length };
+      if (!form) return { populated: 0, trusted: 0, total: 0 };
+      const required = [...form.querySelectorAll("[required]")].filter((field) => asField(field));
+      let populated = 0;
+      let trusted = 0;
+      required.forEach((field) => {
+        const value = field.value.trim();
+        if (!value) return;
+        populated += 1;
+        const meta = modelFieldState.get(field.name);
+        const fieldTrusted = !meta || meta.confidence !== "low" || meta.confirmed;
+        if (fieldTrusted) trusted += 1;
+      });
+      return { populated, trusted, total: required.length };
     };
 
     const setStage = (stageId) => {
@@ -244,12 +298,193 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
       });
     };
 
+    const updateRunButtonState = () => {
+      if (!(runButton instanceof HTMLButtonElement)) return;
+      if (isAnimating) {
+        runButton.textContent = "Skip animation";
+        runButton.setAttribute("aria-busy", "true");
+      } else {
+        runButton.textContent = hasRun ? "Run again" : "Run extraction";
+        runButton.removeAttribute("aria-busy");
+      }
+    };
+
+    const setFieldValue = (fieldId, value) => {
+      if (!form) return;
+      const field = asField(form.elements.namedItem(fieldId));
+      if (field) field.value = value;
+    };
+
+    const clearFieldMeta = (fieldId, wrapper, metaBlock) => {
+      wrapper.classList.remove("is-low-confidence", "is-reviewed-confidence");
+      if (metaBlock instanceof HTMLElement) {
+        const badge = metaBlock.querySelector("[data-confidence-badge]");
+        const note = metaBlock.querySelector("[data-review-flag]");
+        if (badge instanceof HTMLElement) {
+          badge.textContent = "";
+          badge.classList.remove("high", "medium", "low");
+        }
+        if (note instanceof HTMLElement) note.textContent = "";
+        metaBlock.hidden = true;
+      }
+      modelFieldState.delete(fieldId);
+    };
+
+    const renderFieldMeta = (fieldId) => {
+      const wrapper = root.querySelector(`[data-field-id="${fieldId}"]`);
+      const metaBlock = root.querySelector(`[data-field-meta="${fieldId}"]`);
+      if (!(wrapper instanceof HTMLElement)) return;
+      const meta = modelFieldState.get(fieldId);
+      if (!meta) {
+        clearFieldMeta(fieldId, wrapper, metaBlock);
+        return;
+      }
+
+      const needsReview = meta.confidence === "low" && !meta.confirmed;
+      const reviewed = meta.confidence === "low" && meta.confirmed;
+      wrapper.classList.toggle("is-low-confidence", needsReview);
+      wrapper.classList.toggle("is-reviewed-confidence", reviewed);
+      if (!(metaBlock instanceof HTMLElement)) return;
+
+      const badge = metaBlock.querySelector("[data-confidence-badge]");
+      const note = metaBlock.querySelector("[data-review-flag]");
+      const confText = `${meta.confidence[0].toUpperCase()}${meta.confidence.slice(1)}`;
+      if (badge instanceof HTMLElement) {
+        badge.textContent = `Confidence: ${confText}`;
+        badge.classList.remove("high", "medium", "low");
+        badge.classList.add(meta.confidence);
+      }
+      if (note instanceof HTMLElement) {
+        if (meta.confidence === "low") {
+          const prefix = meta.confirmed ? "Reviewer confirmed." : "Needs reviewer confirmation.";
+          note.textContent = meta.reviewNote ? `${prefix} ${meta.reviewNote}` : prefix;
+        } else {
+          note.textContent = meta.reviewNote || "Model-populated field.";
+        }
+      }
+      metaBlock.hidden = false;
+    };
+
+    const renderAllFieldMeta = () => {
+      intakeFieldOrder.forEach((fieldId) => renderFieldMeta(fieldId));
+    };
+
     const updateRequiredStatus = () => {
       const counts = getRequiredCounts();
-      if (requiredStatus) {
-        requiredStatus.textContent = `Required fields complete: ${counts.complete} / ${counts.total}`;
+      if (requiredPopulatedStatus) {
+        requiredPopulatedStatus.textContent =
+          `Required fields populated: ${counts.populated} / ${counts.total}`;
+      }
+      if (requiredTrustedStatus) {
+        requiredTrustedStatus.textContent =
+          `Required fields trusted for handoff: ${counts.trusted} / ${counts.total}`;
       }
       return counts;
+    };
+
+    const applyRun = (run) => {
+      if (rawInput instanceof HTMLTextAreaElement) rawInput.value = run.rawText;
+      intakeFieldOrder.forEach((fieldId) => {
+        setFieldValue(fieldId, run.extractedValues[fieldId] || "");
+        const confidence = run.fieldConfidence[fieldId];
+        if (confidence) {
+          modelFieldState.set(fieldId, {
+            confidence,
+            reviewNote: run.reviewFlags?.[fieldId] || "",
+            confirmed: false,
+          });
+        } else {
+          modelFieldState.delete(fieldId);
+        }
+        renderFieldMeta(fieldId);
+      });
+      updateRequiredStatus();
+    };
+
+    const finalizeRun = (wasSkipped) => {
+      isAnimating = false;
+      hasRun = true;
+      activeRun = null;
+      updateRunButtonState();
+      updateRequiredStatus();
+      setStage("intake");
+      if (sourceStatus) {
+        sourceStatus.textContent = wasSkipped
+          ? "Extraction finalized. Review low-confidence fields before handoff."
+          : "Extraction draft ready. Review low-confidence fields before handoff.";
+      }
+      if (draftStatus) {
+        draftStatus.textContent =
+          "Model-built draft loaded. Save Incomplete to persist this draft locally.";
+      }
+    };
+
+    const typeRawText = async (text, token) => {
+      if (!(rawInput instanceof HTMLTextAreaElement)) return;
+      const chunkSize = 3;
+      for (let index = 0; index < text.length; index += chunkSize) {
+        if (token !== animationToken) return;
+        rawInput.value = text.slice(0, index + chunkSize);
+        await wait(8);
+      }
+      rawInput.value = text;
+    };
+
+    const fillFields = async (run, token) => {
+      for (const fieldId of intakeFieldOrder) {
+        if (token !== animationToken) return;
+        setFieldValue(fieldId, run.extractedValues[fieldId] || "");
+        const confidence = run.fieldConfidence[fieldId];
+        if (confidence) {
+          modelFieldState.set(fieldId, {
+            confidence,
+            reviewNote: run.reviewFlags?.[fieldId] || "",
+            confirmed: false,
+          });
+        } else {
+          modelFieldState.delete(fieldId);
+        }
+        renderFieldMeta(fieldId);
+        updateRequiredStatus();
+        await wait(150);
+      }
+    };
+
+    const runExtraction = async () => {
+      if (isAnimating || !form || extractionRuns.length === 0) return;
+      const run = extractionRuns[extractionIndex % extractionRuns.length];
+      extractionIndex = (extractionIndex + 1) % extractionRuns.length;
+      activeRun = run;
+      animationToken += 1;
+      const token = animationToken;
+      isAnimating = true;
+      updateRunButtonState();
+      setStage("intake");
+
+      modelFieldState.clear();
+      intakeFieldOrder.forEach((fieldId) => {
+        setFieldValue(fieldId, "");
+        renderFieldMeta(fieldId);
+      });
+      if (rawInput instanceof HTMLTextAreaElement) rawInput.value = "";
+      updateRequiredStatus();
+
+      if (sourceStatus) sourceStatus.textContent = "Typing source text...";
+      if (draftStatus) draftStatus.textContent = "Building extracted intake draft...";
+
+      await typeRawText(run.rawText, token);
+      if (token !== animationToken) return;
+      if (sourceStatus) sourceStatus.textContent = "Mapping extracted fields...";
+      await fillFields(run, token);
+      if (token !== animationToken) return;
+      finalizeRun(false);
+    };
+
+    const skipExtraction = () => {
+      if (!isAnimating || !activeRun) return;
+      animationToken += 1;
+      applyRun(activeRun);
+      finalizeRun(true);
     };
 
     const saveDraft = () => {
@@ -272,7 +507,7 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
         const parsed = JSON.parse(raw);
         restoredDraft = true;
         Object.entries(parsed.values || {}).forEach(([name, value]) => {
-          const field = form.elements.namedItem(name);
+          const field = asField(form.elements.namedItem(name));
           if (field) field.value = String(value ?? "");
         });
         if (draftStatus && parsed.savedAt) {
@@ -284,15 +519,22 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
     };
 
     const clearDraft = () => {
+      animationToken += 1;
+      isAnimating = false;
+      activeRun = null;
+      hasRun = false;
+      updateRunButtonState();
       localStorage.removeItem(STORAGE_KEY);
       if (!form) return;
       inputs.forEach((input) => {
-        if (!input.defaultValue) {
-          input.value = "";
-        } else {
-          input.value = input.defaultValue;
-        }
+        input.value = input.defaultValue || "";
       });
+      modelFieldState.clear();
+      renderAllFieldMeta();
+      if (rawInput instanceof HTMLTextAreaElement) rawInput.value = "";
+      if (sourceStatus) {
+        sourceStatus.textContent = "Load a sample run to simulate deterministic extraction.";
+      }
       if (draftStatus) {
         draftStatus.textContent = "Draft cleared from this browser.";
       }
@@ -305,19 +547,27 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
       if (!(target instanceof HTMLElement)) return;
 
       const action = target.dataset.action;
-      if (action === "save") {
+      if (action === "run-extraction") {
+        if (isAnimating) {
+          skipExtraction();
+        } else {
+          void runExtraction();
+        }
+      } else if (action === "save") {
         saveDraft();
       } else if (action === "clear") {
         clearDraft();
       } else if (action === "stage-handoff") {
         const counts = updateRequiredStatus();
-        if (counts.complete === counts.total) {
+        if (counts.populated === counts.total && counts.trusted === counts.total) {
           setStage("handoff");
           if (draftStatus) {
-            draftStatus.textContent = "All required data complete. Case marked handoff-ready.";
+            draftStatus.textContent = "Required data complete and trusted. Case marked handoff-ready.";
           }
         } else if (draftStatus) {
-          draftStatus.textContent = "Complete all required fields before handoff-ready state.";
+          draftStatus.textContent = counts.populated < counts.total
+            ? "Complete all required fields before handoff-ready state."
+            : "Confirm low-confidence required fields before handoff-ready state.";
         }
       }
 
@@ -328,12 +578,20 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
 
     inputs.forEach((field) => {
       field.addEventListener("input", () => {
+        const meta = modelFieldState.get(field.name);
+        if (meta && meta.confidence === "low" && !meta.confirmed) {
+          meta.confirmed = true;
+          modelFieldState.set(field.name, meta);
+          renderFieldMeta(field.name);
+        }
         updateRequiredStatus();
       });
     });
 
     loadDraft();
+    renderAllFieldMeta();
     updateRequiredStatus();
+    updateRunButtonState();
     setStage(restoredDraft ? "saved" : "intake");
   }
 </script>
@@ -498,20 +756,103 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
     margin-bottom: 0.8rem;
   }
 
+  .raw-input-shell {
+    display: grid;
+    gap: 0.45rem;
+    background: #fff8ef;
+    border: 1px solid #dcc5ae;
+    border-radius: 0.65rem;
+    padding: 0.65rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .raw-label {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #5a4a3a;
+  }
+
+  .raw-input-shell textarea {
+    border: 1px solid #cab8a6;
+    border-radius: 0.45rem;
+    padding: 0.62rem;
+    background: #fffdfa;
+    color: var(--ink);
+    font: inherit;
+    line-height: 1.4;
+  }
+
+  .raw-input-shell textarea:focus {
+    outline: 2px solid var(--accent-soft);
+    border-color: var(--accent);
+  }
+
+  .raw-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .run-button {
+    border: 1px solid #7d5f42;
+    background: #ebd1b6;
+    color: #33261b;
+    font-weight: 700;
+    padding: 0.45rem 0.8rem;
+    border-radius: 0.45rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .run-button:hover {
+    border-color: var(--accent);
+  }
+
+  .run-button[aria-busy="true"] {
+    background: #f0dec9;
+  }
+
+  #source-status {
+    margin: 0;
+    font-size: 0.79rem;
+  }
+
   .intake-form {
     display: grid;
     gap: 0.65rem;
   }
 
+  .panel-subhead {
+    border-bottom: 1px dashed #ccb9a6;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .panel-subhead h4 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-family: "Sora", "Trebuchet MS", sans-serif;
+  }
+
+  .panel-subhead p {
+    margin: 0.28rem 0 0;
+    font-size: 0.8rem;
+  }
+
   .field {
     display: grid;
     gap: 0.35rem;
+    border: 1px solid transparent;
+    border-radius: 0.55rem;
+    padding: 0.35rem 0.35rem 0.4rem;
   }
 
-  .field span {
+  .field-head {
     display: flex;
     gap: 0.5rem;
     align-items: center;
+    flex-wrap: wrap;
     font-weight: 600;
     font-size: 0.84rem;
   }
@@ -540,6 +881,63 @@ const stageOrder = prototypeContent.workflow.map((step) => step.id);
   .field textarea:focus {
     outline: 2px solid var(--accent-soft);
     border-color: var(--accent);
+  }
+
+  .field-ai-meta {
+    display: grid;
+    gap: 0.22rem;
+  }
+
+  .confidence-badge {
+    display: inline-flex;
+    width: fit-content;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 0.12rem 0.48rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .confidence-badge.high {
+    color: #226139;
+    border-color: #9fc4a8;
+    background: #ebf8ef;
+  }
+
+  .confidence-badge.medium {
+    color: #84550d;
+    border-color: #dbbf96;
+    background: #fef6ea;
+  }
+
+  .confidence-badge.low {
+    color: #9a2525;
+    border-color: #dda5a5;
+    background: #feefef;
+  }
+
+  .review-flag {
+    margin: 0;
+    font-size: 0.74rem;
+    line-height: 1.35;
+    color: #6f5d4c;
+  }
+
+  .field.is-low-confidence {
+    border-color: #ddb1b1;
+    background: #fff6f6;
+  }
+
+  .field.is-low-confidence input,
+  .field.is-low-confidence textarea {
+    border-color: #d59a9a;
+  }
+
+  .field.is-reviewed-confidence {
+    border-color: #c6bb9b;
+    background: #fffaf2;
   }
 
   .intake-status {
