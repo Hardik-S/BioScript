@@ -1,4 +1,4 @@
-import type { Highlight, Metric, NavLink, TimelineStep } from "../types/content";
+import type { Highlight, Metric, TimelineStep } from "../types/content";
 
 interface PrototypeState {
   id: "intake" | "queue" | "follow-up" | "handoff" | "audit";
@@ -12,7 +12,6 @@ interface CaseStudyContent {
   tagline: string;
   audience: string;
   valueStatement: string;
-  nav: NavLink[];
   heroPoints: string[];
   problemSummary: string;
   solutionSummary: string;
@@ -31,13 +30,6 @@ export const caseStudyContent: CaseStudyContent = {
   audience: "BioScript hiring manager and program leadership",
   valueStatement:
     "This MVP is intentionally narrow: improve first-mile intake quality, reviewer speed, and handoff reliability without pretending to replace a full pharmacovigilance platform.",
-  nav: [
-    { href: "#problem", label: "Problem" },
-    { href: "#solution", label: "Solution" },
-    { href: "#prototype", label: "Prototype" },
-    { href: "#delivery", label: "Delivery" },
-    { href: "#credibility", label: "Credibility" },
-  ],
   heroPoints: [
     "Built for routine patient-support interactions where potential adverse events first surface.",
     "Preserves human-in-the-loop review and clear role separation for medical judgment.",
@@ -184,4 +176,3 @@ export const caseStudyContent: CaseStudyContent = {
   emailBlurb:
     "Safety Intake Desk is a product-scoped MVP for BioScript that improves first-mile adverse-event intake and reviewer handoff quality in 12-16 weeks, without a core-system rewrite.",
 };
-

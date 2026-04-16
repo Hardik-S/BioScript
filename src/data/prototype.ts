@@ -80,32 +80,32 @@ export const prototypeContent: PrototypeContent = {
   workflow: [
     {
       id: "intake",
-      label: "1. Intake Start",
+      label: "Intake",
       note: "Launch from patient context and capture minimum safety data.",
     },
     {
       id: "saved",
-      label: "2. Save Incomplete",
+      label: "Saved Case",
       note: "Persist draft when required details are still missing.",
     },
     {
       id: "queue",
-      label: "3. Reviewer Queue",
+      label: "Reviewer Queue",
       note: "Route by seriousness and confidence into PV review.",
     },
     {
       id: "followup",
-      label: "4. Follow-up",
+      label: "Follow-up",
       note: "Assign tasks for missing clinical facts and contact attempts.",
     },
     {
       id: "handoff",
-      label: "5. Handoff Ready",
+      label: "Handoff Ready",
       note: "Generate export packet and handoff metadata.",
     },
     {
       id: "audit",
-      label: "6. Audit/KPI Snapshot",
+      label: "Audit Snapshot",
       note: "Track cycle time, completion quality, and queue age.",
     },
   ],

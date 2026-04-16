@@ -3,22 +3,25 @@ import SectionHeading from "@/components/SectionHeading.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { appendixSections, riskRegister } from "@/content/appendix";
-import { caseStudyContent } from "@/content/caseStudy";
 
 const title = "Safety Intake Desk Appendix";
 const description = "Supporting notes for the BioScript Safety Intake Desk case study.";
 const baseUrl = import.meta.env.BASE_URL;
+const nav = [
+  { href: `${baseUrl}#prototype`, label: "Demo" },
+  { href: "#top", label: "Top" },
+];
 ---
 
 <BaseLayout title={title} description={description}>
-  <SiteHeader nav={caseStudyContent.nav} />
+  <SiteHeader nav={nav} />
 
   <main id="top" class="section-block">
     <div class="page-shell appendix-shell">
       <SectionHeading
         eyebrow="Appendix"
-        title="Supporting detail without crowding the landing page"
-        lead="This page carries the heavier rationale behind the MVP framing, static prototype boundary, and rollout logic."
+        title="Supporting detail without crowding the demo"
+        lead="The landing page now leads with the workflow. This appendix carries the heavier rationale, workflow notes, and pilot assumptions."
       />
 
       <div class="appendix-grid">
@@ -46,8 +49,12 @@ const baseUrl = import.meta.env.BASE_URL;
       </section>
 
       <section class="panel note-panel">
-        <h2>Email-ready framing</h2>
-        <p>{caseStudyContent.emailBlurb}</p>
+        <h2>Short version</h2>
+        <p>
+          Safety Intake Desk is a deliberately narrow MVP for first-mile adverse-event intake: capture the initial
+          signal cleanly, preserve incomplete drafts, route reviewer work visibly, and hand complete cases off without
+          pretending to replace the downstream PV system.
+        </p>
         <div class="appendix-actions">
           <a class="cta-link primary" href={baseUrl}>Back to the case study</a>
           <a class="cta-link secondary" href="#top">Back to top</a>
