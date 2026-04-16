@@ -246,6 +246,8 @@ const extractionRuns = prototypeContent.extractionRuns;
     let isAnimating = false;
     let animationToken = 0;
     let activeRun = null;
+    let userTriggeredRun = false;
+    let autoRunTimeoutId = null;
 
     const modelFieldState = new Map();
     const form = root.querySelector("#prototype-intake-form");
@@ -307,6 +309,24 @@ const extractionRuns = prototypeContent.extractionRuns;
         runButton.textContent = hasRun ? "Run again" : "Run extraction";
         runButton.removeAttribute("aria-busy");
       }
+    };
+
+    const clearAutoRunTimeout = () => {
+      if (autoRunTimeoutId !== null) {
+        window.clearTimeout(autoRunTimeoutId);
+        autoRunTimeoutId = null;
+      }
+    };
+
+    const scheduleAutoRun = () => {
+      clearAutoRunTimeout();
+      autoRunTimeoutId = window.setTimeout(() => {
+        if (userTriggeredRun || hasRun || isAnimating) return;
+        if (sourceStatus) {
+          sourceStatus.textContent = "No manual run detected. Auto-running a sample extraction.";
+        }
+        void runExtraction();
+      }, 30000);
     };
 
     const setFieldValue = (fieldId, value) => {
@@ -548,6 +568,8 @@ const extractionRuns = prototypeContent.extractionRuns;
 
       const action = target.dataset.action;
       if (action === "run-extraction") {
+        userTriggeredRun = true;
+        clearAutoRunTimeout();
         if (isAnimating) {
           skipExtraction();
         } else {
@@ -593,6 +615,7 @@ const extractionRuns = prototypeContent.extractionRuns;
     updateRequiredStatus();
     updateRunButtonState();
     setStage(restoredDraft ? "saved" : "intake");
+    scheduleAutoRun();
   }
 </script>
 

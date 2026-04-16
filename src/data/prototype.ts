@@ -149,6 +149,14 @@ export const prototypeContent: PrototypeContent = {
         "Onset sounds like \"yesterday late afternoon\" relative to call today. " +
         "Please triage and advise if we need second outreach for concomitant meds.",
     },
+    {
+      id: "excel-row-paste",
+      source: "Pasted Excel row",
+      text:
+        "AE Intake Dump | row 38 | 2026-04-15 10:18 ET\tPAT-REDACTED-1042 / John D\tproduct: BIO IMM 21 ?\t" +
+        "reaction: chest tight + dizzy + nausea after injection\tonset: last wed pm maybe 6ish\t" +
+        "reporter=RN-77 field nurse\tconmeds: BP med ? unknown\tnotes: no ER, wants callback",
+    },
   ],
   extractionRuns: [
     {
@@ -212,6 +220,36 @@ export const prototypeContent: PrototypeContent = {
       reviewFlags: {
         suspectProduct: "Product label in source was ambiguous (\"bio immune one, 21 maybe\").",
         eventOnset: "Date inferred from relative phrase \"yesterday late afternoon.\"",
+      },
+    },
+    {
+      id: "run-excel-row-paste",
+      rawText:
+        "AE Intake Dump | row 38 | 2026-04-15 10:18 ET\tPAT-REDACTED-1042 / John D\tproduct: BIO IMM 21 ?\t" +
+        "reaction: chest tight + dizzy + nausea after injection\tonset: last wed pm maybe 6ish\t" +
+        "reporter=RN-77 field nurse\tconmeds: BP med ? unknown\tnotes: no ER, wants callback",
+      extractedValues: {
+        suspectProduct: "BIO-IMM-21 (?)",
+        reactionSummary:
+          "Patient reported chest tightness, dizziness, and nausea after injection; no ER visit reported.",
+        eventOnset: "2026-04-09",
+        reporterRole: "Field Nurse (RN-77)",
+        concomitantMeds: "Possible blood pressure medication (unconfirmed)",
+        notes:
+          "Model draft from pasted spreadsheet row. Reviewer should confirm product text normalization and onset estimate.",
+      },
+      fieldConfidence: {
+        suspectProduct: "low",
+        reactionSummary: "medium",
+        eventOnset: "low",
+        reporterRole: "medium",
+        concomitantMeds: "low",
+        notes: "high",
+      },
+      reviewFlags: {
+        suspectProduct: "Product token was pasted as \"BIO IMM 21 ?\" and may need normalization.",
+        eventOnset: "Onset inferred from shorthand phrase \"last wed pm maybe 6ish.\"",
+        concomitantMeds: "Concomitant medication listed as uncertain shorthand in source row.",
       },
     },
   ],
