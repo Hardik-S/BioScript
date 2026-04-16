@@ -1,0 +1,127 @@
+---
+import SectionHeading from "@/components/SectionHeading.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { appendixSections, riskRegister } from "@/content/appendix";
+import { caseStudyContent } from "@/content/caseStudy";
+
+const title = "Safety Intake Desk Appendix";
+const description = "Supporting notes for the BioScript Safety Intake Desk case study.";
+const baseUrl = import.meta.env.BASE_URL;
+---
+
+<BaseLayout title={title} description={description}>
+  <SiteHeader nav={caseStudyContent.nav} />
+
+  <main id="top" class="section-block">
+    <div class="page-shell appendix-shell">
+      <SectionHeading
+        eyebrow="Appendix"
+        title="Supporting detail without crowding the landing page"
+        lead="This page carries the heavier rationale behind the MVP framing, static prototype boundary, and rollout logic."
+      />
+
+      <div class="appendix-grid">
+        {appendixSections.map((section) => (
+          <article class="panel appendix-panel">
+            <h2>{section.title}</h2>
+            <p>{section.intro}</p>
+            <ul>
+              {section.points.map((point) => <li>{point}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+
+      <section class="panel risk-panel">
+        <h2>Execution risks I would manage explicitly</h2>
+        <div class="risk-grid">
+          {riskRegister.map((item) => (
+            <article>
+              <h3>{item.title}</h3>
+              <p>{item.mitigation}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section class="panel note-panel">
+        <h2>Email-ready framing</h2>
+        <p>{caseStudyContent.emailBlurb}</p>
+        <div class="appendix-actions">
+          <a class="cta-link primary" href={baseUrl}>Back to the case study</a>
+          <a class="cta-link secondary" href="#top">Back to top</a>
+        </div>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .appendix-shell {
+    display: grid;
+    gap: 1.2rem;
+  }
+
+  .appendix-grid,
+  .risk-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .appendix-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .appendix-panel,
+  .risk-panel,
+  .note-panel {
+    padding: 1.5rem;
+  }
+
+  .appendix-panel h2,
+  .risk-panel h2,
+  .note-panel h2,
+  .risk-grid h3 {
+    margin: 0;
+  }
+
+  .appendix-panel p,
+  .appendix-panel li,
+  .risk-grid p,
+  .note-panel p {
+    color: var(--color-text-soft);
+    line-height: 1.75;
+  }
+
+  .appendix-panel ul {
+    margin: 1rem 0 0;
+    padding-left: 1.1rem;
+  }
+
+  .risk-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 1rem;
+  }
+
+  .risk-grid article {
+    padding: 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    background: rgba(250, 245, 237, 0.65);
+  }
+
+  .appendix-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 980px) {
+    .appendix-grid,
+    .risk-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

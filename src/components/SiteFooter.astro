@@ -1,0 +1,84 @@
+---
+interface Props {
+  email: string;
+  linkedin: string;
+  github: string;
+}
+
+const { email, linkedin, github } = Astro.props;
+---
+
+<footer class="site-footer section-block">
+  <div class="page-shell footer-shell panel">
+    <div>
+      <p class="eyebrow">Ready To Send</p>
+      <h2>A focused MVP, a believable prototype, and a practical wedge.</h2>
+      <p>
+        This site is designed to travel well in an email: short enough to scan quickly, concrete enough to judge
+        execution quality, and grounded enough to show what I would actually ship first.
+      </p>
+    </div>
+    <div class="footer-links">
+      <a class="cta-link primary" href={`mailto:${email}?subject=Safety Intake Desk case study`}>
+        Email Hardik
+      </a>
+      <a class="cta-link secondary" href={linkedin} target="_blank" rel="noreferrer">
+        LinkedIn
+      </a>
+      <a class="cta-link secondary" href={github} target="_blank" rel="noreferrer">
+        GitHub
+      </a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer-shell {
+    display: grid;
+    grid-template-columns: 1.7fr 1fr;
+    gap: 2rem;
+    padding: 2rem;
+  }
+
+  .eyebrow,
+  h2,
+  p {
+    margin: 0;
+  }
+
+  .eyebrow {
+    color: var(--color-accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin-top: 0.65rem;
+    font-size: clamp(1.8rem, 2.4vw, 2.8rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  p {
+    margin-top: 1rem;
+    max-width: 44rem;
+    color: var(--color-text-soft);
+    line-height: 1.75;
+  }
+
+  .footer-links {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0.8rem;
+  }
+
+  @media (max-width: 820px) {
+    .footer-shell {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

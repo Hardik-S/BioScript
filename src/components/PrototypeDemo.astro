@@ -1,0 +1,772 @@
+---
+import { prototypeContent } from "../data/prototype";
+
+const stageOrder = prototypeContent.workflow.map((step) => step.id);
+---
+
+<section class="prototype" id="prototype" aria-labelledby="prototype-title">
+  <div class="shell">
+    <header class="hero">
+      <p class="kicker">Static product prototype</p>
+      <h2 id="prototype-title">{prototypeContent.title}</h2>
+      <p class="subtitle">{prototypeContent.subtitle}</p>
+    </header>
+
+    <div class="layout">
+      <aside class="rail" aria-label="Workflow stages">
+        <ol>
+          {
+            prototypeContent.workflow.map((step, index) => (
+              <li
+                class:list={[
+                  "step",
+                  index === 0 && "is-active",
+                  index === 0 && "is-complete",
+                ]}
+                data-step={step.id}
+              >
+                <h3>{step.label}</h3>
+                <p>{step.note}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </aside>
+
+      <div class="main">
+        <section class="panel panel-context">
+          <h3>Patient Context</h3>
+          <div class="context-grid">
+            {
+              Object.entries(prototypeContent.patientContext).map(([key, value]) => (
+                <div class="context-item">
+                  <span>{key}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))
+            }
+          </div>
+        </section>
+
+        <section class="panel panel-intake" data-stage="intake">
+          <div class="panel-head">
+            <h3>Potential AE Intake</h3>
+            <p>Minimum required fields are enforced before handoff readiness.</p>
+          </div>
+
+          <form class="intake-form" id="prototype-intake-form" novalidate>
+            {
+              prototypeContent.intakeFields.map((field) => (
+                <label class="field" for={field.id}>
+                  <span>
+                    {field.label}
+                    {field.required ? <em>Required</em> : <small>Optional</small>}
+                  </span>
+                  {field.id === "reactionSummary" || field.id === "notes" ? (
+                    <textarea
+                      id={field.id}
+                      name={field.id}
+                      required={field.required}
+                      placeholder={field.placeholder}
+                      rows={3}
+                    >
+                      {field.value}
+                    </textarea>
+                  ) : (
+                    <input
+                      id={field.id}
+                      name={field.id}
+                      required={field.required}
+                      value={field.value}
+                      placeholder={field.placeholder}
+                    />
+                  )}
+                </label>
+              ))
+            }
+            <div class="intake-status">
+              <p id="required-status">
+                Required fields complete: 0 / {prototypeContent.requiredFields.length}
+              </p>
+              <p id="draft-status">Draft has not been saved in this browser.</p>
+            </div>
+            <div class="actions">
+              <button type="button" data-action="save">Save Incomplete</button>
+              <button type="button" data-action="clear">Clear Draft</button>
+              <button type="button" data-action="stage-handoff">Mark Handoff Ready</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel stage-panel is-visible" data-stage="saved">
+          <h3>Saved Incomplete State</h3>
+          <p>
+            Case is retained with timestamp, missing fields, and routed to reviewer queue with
+            "follow-up needed" status.
+          </p>
+          <ul class="pills">
+            <li>Case: AE-2026-0431</li>
+            <li>State: Draft preserved</li>
+            <li>Missing items flagged for reviewer</li>
+          </ul>
+        </section>
+
+        <section class="panel stage-panel" data-stage="queue">
+          <h3>Reviewer Queue</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Patient</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Submitted</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                prototypeContent.queue.map((row) => (
+                  <tr>
+                    <td>{row.caseId}</td>
+                    <td>{row.patient}</td>
+                    <td><span class={`priority ${row.priority.toLowerCase()}`}>{row.priority}</span></td>
+                    <td>{row.status}</td>
+                    <td>{row.submittedAt}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </section>
+
+        <section class="panel stage-panel" data-stage="followup">
+          <h3>Follow-up State</h3>
+          <ul class="task-list">
+            {
+              prototypeContent.followUp.map((task) => (
+                <li>
+                  <div>
+                    <strong>{task.task}</strong>
+                    <p>{task.owner}</p>
+                  </div>
+                  <div>
+                    <span>{task.due}</span>
+                    <em>{task.status}</em>
+                  </div>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+
+        <section class="panel stage-panel" data-stage="handoff">
+          <h3>Handoff-Ready / Export</h3>
+          <p>
+            Packet <strong>{prototypeContent.handoff.packetId}</strong> is prepared for
+            <strong> {prototypeContent.handoff.destination}</strong>.
+          </p>
+          <ul>
+            {prototypeContent.handoff.included.map((item) => <li>{item}</li>)}
+          </ul>
+          <p class="export-state">{prototypeContent.handoff.exportState}</p>
+        </section>
+
+        <section class="panel stage-panel" data-stage="audit">
+          <h3>Audit / KPI Snapshot</h3>
+          <div class="metrics">
+            {
+              prototypeContent.metrics.map((metric) => (
+                <article>
+                  <h4>{metric.label}</h4>
+                  <p>{metric.value}</p>
+                  <small>{metric.delta}</small>
+                </article>
+              ))
+            }
+          </div>
+        </section>
+
+        <nav class="stage-controls" aria-label="Prototype stage controls">
+          {
+            prototypeContent.workflow.map((step) => (
+              <button
+                type="button"
+                data-stage-target={step.id}
+                class="stage-button"
+              >
+                {step.label}
+              </button>
+            ))
+          }
+        </nav>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script is:inline define:vars={{ stageOrder }}>
+  const STORAGE_KEY = "bioscript-prototype-draft-v1";
+  const root = document.getElementById("prototype");
+
+  if (root) {
+    let restoredDraft = false;
+    const form = root.querySelector("#prototype-intake-form");
+    const requiredStatus = root.querySelector("#required-status");
+    const draftStatus = root.querySelector("#draft-status");
+    const stageButtons = root.querySelectorAll("[data-stage-target]");
+    const stagePanels = root.querySelectorAll(".stage-panel");
+    const railSteps = root.querySelectorAll(".step");
+    const inputs = form ? form.querySelectorAll("input, textarea") : [];
+
+    const getRequiredCounts = () => {
+      if (!form) return { complete: 0, total: 0 };
+      const required = form.querySelectorAll("[required]");
+      const complete = [...required].filter((field) => field.value.trim().length > 0).length;
+      return { complete, total: required.length };
+    };
+
+    const setStage = (stageId) => {
+      stagePanels.forEach((panel) => {
+        panel.classList.toggle("is-visible", panel.dataset.stage === stageId);
+      });
+      stageButtons.forEach((button) => {
+        button.classList.toggle("is-active", button.dataset.stageTarget === stageId);
+      });
+      railSteps.forEach((step, index) => {
+        const targetIndex = stageOrder.indexOf(stageId);
+        const stepIndex = stageOrder.indexOf(step.dataset.step || "");
+        step.classList.toggle("is-active", step.dataset.step === stageId);
+        step.classList.toggle("is-complete", stepIndex >= 0 && stepIndex <= targetIndex);
+        if (index === 0 && stageId !== "intake") {
+          step.classList.add("is-complete");
+        }
+      });
+    };
+
+    const updateRequiredStatus = () => {
+      const counts = getRequiredCounts();
+      if (requiredStatus) {
+        requiredStatus.textContent = `Required fields complete: ${counts.complete} / ${counts.total}`;
+      }
+      return counts;
+    };
+
+    const saveDraft = () => {
+      if (!form) return;
+      const payload = {
+        savedAt: new Date().toLocaleString(),
+        values: Object.fromEntries(new FormData(form).entries()),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      if (draftStatus) {
+        draftStatus.textContent = `Draft saved locally at ${payload.savedAt}.`;
+      }
+      setStage("saved");
+    };
+
+    const loadDraft = () => {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw || !form) return;
+      try {
+        const parsed = JSON.parse(raw);
+        restoredDraft = true;
+        Object.entries(parsed.values || {}).forEach(([name, value]) => {
+          const field = form.elements.namedItem(name);
+          if (field) field.value = String(value ?? "");
+        });
+        if (draftStatus && parsed.savedAt) {
+          draftStatus.textContent = `Draft restored from ${parsed.savedAt}.`;
+        }
+      } catch (_err) {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    };
+
+    const clearDraft = () => {
+      localStorage.removeItem(STORAGE_KEY);
+      if (!form) return;
+      inputs.forEach((input) => {
+        if (!input.defaultValue) {
+          input.value = "";
+        } else {
+          input.value = input.defaultValue;
+        }
+      });
+      if (draftStatus) {
+        draftStatus.textContent = "Draft cleared from this browser.";
+      }
+      updateRequiredStatus();
+      setStage("intake");
+    };
+
+    root.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const action = target.dataset.action;
+      if (action === "save") {
+        saveDraft();
+      } else if (action === "clear") {
+        clearDraft();
+      } else if (action === "stage-handoff") {
+        const counts = updateRequiredStatus();
+        if (counts.complete === counts.total) {
+          setStage("handoff");
+          if (draftStatus) {
+            draftStatus.textContent = "All required data complete. Case marked handoff-ready.";
+          }
+        } else if (draftStatus) {
+          draftStatus.textContent = "Complete all required fields before handoff-ready state.";
+        }
+      }
+
+      if (target.dataset.stageTarget) {
+        setStage(target.dataset.stageTarget);
+      }
+    });
+
+    inputs.forEach((field) => {
+      field.addEventListener("input", () => {
+        updateRequiredStatus();
+      });
+    });
+
+    loadDraft();
+    updateRequiredStatus();
+    setStage(restoredDraft ? "saved" : "intake");
+  }
+</script>
+
+<style>
+  .prototype {
+    --bg: #f3efe8;
+    --ink: #1e1b18;
+    --ink-muted: #4f4a43;
+    --surface: #fffdfa;
+    --surface-2: #f9f4ec;
+    --accent: #8a3b12;
+    --accent-soft: #e9c6a3;
+    --line: #d4c5b5;
+    --high: #b32020;
+    --med: #95600b;
+    --low: #286236;
+    color: var(--ink);
+    margin: 4rem 0;
+    font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  }
+
+  .shell {
+    background: radial-gradient(120% 120% at 95% 0%, #f3dcbc 0%, var(--bg) 52%);
+    border: 1px solid var(--line);
+    border-radius: 1.2rem;
+    box-shadow: 0 30px 60px rgba(58, 37, 20, 0.12);
+    overflow: hidden;
+  }
+
+  .hero {
+    border-bottom: 1px solid var(--line);
+    padding: 2rem 2.2rem 1.8rem;
+    background: linear-gradient(110deg, #fff7ef 0%, #f9f1e7 60%, #f2e9de 100%);
+  }
+
+  .kicker {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    color: var(--accent);
+    margin: 0 0 0.35rem;
+    font-weight: 700;
+  }
+
+  .hero h2 {
+    margin: 0;
+    font-size: clamp(1.6rem, 2.6vw, 2.3rem);
+    font-family: "Sora", "Trebuchet MS", sans-serif;
+    line-height: 1.15;
+  }
+
+  .subtitle {
+    margin: 0.6rem 0 0;
+    color: var(--ink-muted);
+    max-width: 64ch;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(12rem, 17rem) minmax(0, 1fr);
+    min-height: 42rem;
+  }
+
+  .rail {
+    background: linear-gradient(180deg, #26221f 0%, #1b1917 100%);
+    color: #f5eee5;
+    padding: 1.2rem 1rem;
+    border-right: 1px solid #4e4338;
+  }
+
+  .rail ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .step {
+    padding: 0.8rem;
+    border: 1px solid #4e4338;
+    border-radius: 0.65rem;
+    background: rgba(255, 255, 255, 0.03);
+    transition: transform 180ms ease, background-color 180ms ease;
+  }
+
+  .step h3 {
+    margin: 0 0 0.35rem;
+    font-size: 0.9rem;
+  }
+
+  .step p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #d8c9bb;
+  }
+
+  .step.is-complete {
+    border-color: #9a7f5d;
+    background: rgba(154, 127, 93, 0.22);
+  }
+
+  .step.is-active {
+    background: rgba(212, 177, 139, 0.27);
+    transform: translateX(3px);
+  }
+
+  .main {
+    background: var(--surface);
+    padding: 1.1rem;
+    display: grid;
+    gap: 0.95rem;
+  }
+
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 0.8rem;
+    background: linear-gradient(180deg, #fffdfa 0%, #fbf6ef 100%);
+    padding: 1rem;
+  }
+
+  .panel h3 {
+    margin: 0 0 0.45rem;
+    font-size: 1rem;
+    font-family: "Sora", "Trebuchet MS", sans-serif;
+  }
+
+  .panel p {
+    margin: 0.25rem 0;
+    color: var(--ink-muted);
+  }
+
+  .context-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .context-item {
+    background: var(--surface-2);
+    border: 1px solid #e4d4c2;
+    padding: 0.55rem;
+    border-radius: 0.5rem;
+  }
+
+  .context-item span {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.67rem;
+    color: #7b6b59;
+  }
+
+  .context-item strong {
+    display: block;
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+  }
+
+  .panel-head p {
+    margin-bottom: 0.8rem;
+  }
+
+  .intake-form {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .field span {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-weight: 600;
+    font-size: 0.84rem;
+  }
+
+  .field em,
+  .field small {
+    font-style: normal;
+    font-size: 0.67rem;
+    border: 1px solid #cbbaa8;
+    border-radius: 999px;
+    padding: 0.15rem 0.45rem;
+    color: #6d5a46;
+  }
+
+  .field input,
+  .field textarea {
+    border: 1px solid #cab8a6;
+    border-radius: 0.45rem;
+    padding: 0.55rem 0.62rem;
+    background: #fffcf8;
+    color: var(--ink);
+    font: inherit;
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    outline: 2px solid var(--accent-soft);
+    border-color: var(--accent);
+  }
+
+  .intake-status {
+    display: grid;
+    gap: 0.2rem;
+    border-top: 1px dashed #ccb9a6;
+    padding-top: 0.65rem;
+    font-size: 0.84rem;
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .actions button,
+  .stage-button {
+    border: 1px solid #a38567;
+    background: #f7ecde;
+    color: #2f2721;
+    font-weight: 600;
+    padding: 0.45rem 0.75rem;
+    border-radius: 0.45rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .actions button:hover,
+  .stage-button:hover {
+    border-color: var(--accent);
+  }
+
+  .stage-panel {
+    display: none;
+  }
+
+  .stage-panel.is-visible {
+    display: block;
+    animation: fade-slide 220ms ease;
+  }
+
+  .pills {
+    padding: 0;
+    margin: 0.8rem 0 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .pills li {
+    border-radius: 999px;
+    border: 1px solid #c5b09a;
+    background: #f3e6d8;
+    padding: 0.25rem 0.58rem;
+    font-size: 0.8rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.45rem 0.3rem;
+    border-bottom: 1px solid #e3d4c4;
+  }
+
+  .priority {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.74rem;
+  }
+
+  .priority.high {
+    color: var(--high);
+    border-color: #d99f9f;
+    background: #fdeaea;
+  }
+
+  .priority.medium {
+    color: var(--med);
+    border-color: #d8c59f;
+    background: #fdf7eb;
+  }
+
+  .priority.low {
+    color: var(--low);
+    border-color: #a8cbaf;
+    background: #eff8f1;
+  }
+
+  .task-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .task-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6rem;
+    border: 1px solid #d9c8b8;
+    border-radius: 0.5rem;
+    padding: 0.55rem;
+    background: #fff9f2;
+    font-size: 0.84rem;
+  }
+
+  .task-list p {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+  }
+
+  .task-list em {
+    font-style: normal;
+    display: inline-block;
+    margin-top: 0.18rem;
+    border: 1px solid #ccb7a1;
+    border-radius: 999px;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.72rem;
+  }
+
+  .export-state {
+    margin-top: 0.7rem;
+    background: #efe2d2;
+    border: 1px solid #c9af93;
+    color: #5e472f;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.45rem;
+    display: inline-block;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .metrics article {
+    border: 1px solid #d4c2b1;
+    border-radius: 0.55rem;
+    background: #fff8f0;
+    padding: 0.65rem;
+  }
+
+  .metrics h4 {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #6b5b4a;
+  }
+
+  .metrics p {
+    margin: 0.35rem 0;
+    font-family: "Sora", "Trebuchet MS", sans-serif;
+    color: #2f2419;
+    font-size: 1.15rem;
+  }
+
+  .metrics small {
+    color: #6b5b4a;
+  }
+
+  .stage-controls {
+    border: 1px dashed #cdbba8;
+    border-radius: 0.7rem;
+    padding: 0.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    background: #fcf5ec;
+  }
+
+  .stage-button.is-active {
+    background: #eecba6;
+    border-color: var(--accent);
+  }
+
+  @keyframes fade-slide {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 980px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+
+    .rail {
+      border-right: 0;
+      border-bottom: 1px solid #4e4338;
+    }
+
+    .rail ol {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .context-grid,
+    .metrics {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      padding: 1.25rem 1.1rem;
+    }
+
+    .main {
+      padding: 0.75rem;
+    }
+
+    .rail ol {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

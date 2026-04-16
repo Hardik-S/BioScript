@@ -1,0 +1,419 @@
+---
+import PrototypeDemo from "@/components/PrototypeDemo.astro";
+import HighlightGrid from "@/components/HighlightGrid.astro";
+import SectionHeading from "@/components/SectionHeading.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import StatCard from "@/components/StatCard.astro";
+import TimelineRail from "@/components/TimelineRail.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { caseStudyContent } from "@/content/caseStudy";
+import { profileContent } from "@/content/profile";
+
+const pageTitle = "Safety Intake Desk | BioScript Case-Study MVP";
+const pageDescription =
+  "A product-led GitHub Pages case study for a focused BioScript MVP: Safety Intake Desk.";
+const baseUrl = import.meta.env.BASE_URL;
+---
+
+<BaseLayout title={pageTitle} description={pageDescription}>
+  <SiteHeader nav={caseStudyContent.nav} />
+
+  <main>
+    <section class="hero-block section-block">
+      <div class="page-shell hero-grid">
+        <div class="hero-copy">
+          <p class="hero-kicker">BioScript case-study MVP</p>
+          <h1>{caseStudyContent.productName}</h1>
+          <p class="hero-summary">{caseStudyContent.tagline}</p>
+          <p class="hero-thesis">{caseStudyContent.valueStatement}</p>
+
+          <div class="hero-actions">
+            <a class="cta-link primary" href="#prototype">Open the prototype</a>
+            <a class="cta-link secondary" href={`${baseUrl}appendix/`}>Read the appendix</a>
+          </div>
+
+          <ul class="hero-points">
+            {caseStudyContent.heroPoints.map((point) => <li>{point}</li>)}
+          </ul>
+        </div>
+
+        <aside class="hero-aside panel">
+          <div class="hero-aside-top">
+            <span class="pill">Product-led framing</span>
+            <span class="pill">GitHub Pages static MVP</span>
+          </div>
+          <div class="hero-aside-grid">
+            {caseStudyContent.kpis.map((metric) => <StatCard {...metric} />)}
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="problem" class="section-block">
+      <div class="page-shell split-section">
+        <div>
+          <SectionHeading
+            eyebrow="Problem"
+            title="The first failure point is unstructured intake, not a missing platform."
+            lead={caseStudyContent.problemSummary}
+          />
+        </div>
+        <div class="panel prose-panel">
+          <p>
+            Potential adverse events are often discovered inside routine patient-support interactions. When that signal
+            lands in general notes instead of a structured intake flow, the downstream reviewer inherits missing minimum
+            facts, inconsistent urgency, and avoidable reconstruction work.
+          </p>
+          <p>
+            The right MVP is narrower than a full pharmacovigilance system. It should improve the quality and speed of
+            first-mile capture, preserve human review, and make downstream handoff more reliable without forcing a core
+            system rewrite.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="solution" class="section-block">
+      <div class="page-shell">
+        <SectionHeading
+          eyebrow="Solution"
+          title="Safety Intake Desk is a thin workflow wedge with a clear operating boundary."
+          lead={caseStudyContent.solutionSummary}
+        />
+        <div class="solution-grid">
+          <div class="panel narrative-panel">
+            <h3>What the workflow does</h3>
+            <TimelineRail steps={caseStudyContent.timeline.slice(0, 4)} />
+          </div>
+          <div class="panel principle-panel">
+            <h3>Why this design is disciplined</h3>
+            <ul>
+              {caseStudyContent.deliveryPrinciples.map((principle) => <li>{principle}</li>)}
+            </ul>
+            <blockquote>
+              <p>{caseStudyContent.emailBlurb}</p>
+            </blockquote>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="page-shell">
+        <SectionHeading
+          eyebrow="Workflow"
+          title="From frontline capture to reviewer handoff"
+          lead="The product logic stays narrow and measurable: intake, triage, follow-up, handoff, and operational visibility."
+        />
+        <div class="workflow-grid">
+          <TimelineRail steps={caseStudyContent.timeline} />
+        </div>
+      </div>
+    </section>
+
+    <div class="page-shell">
+      <PrototypeDemo />
+    </div>
+
+    <section class="section-block">
+      <div class="page-shell">
+        <SectionHeading
+          eyebrow="Why This Wedge"
+          title="The business case is speed, quality, and scope discipline."
+          lead="This is the kind of MVP that earns the right to expand because it proves value early without pretending to be the whole system."
+        />
+        <HighlightGrid items={caseStudyContent.highlights} />
+      </div>
+    </section>
+
+    <section id="delivery" class="section-block">
+      <div class="page-shell split-section">
+        <div>
+          <SectionHeading
+            eyebrow="Delivery"
+            title="A 12 to 16 week pilot is realistic because the architecture stays honest."
+            lead="The real product would reuse existing systems, start with one program, and measure cycle time, completeness, and adoption before broadening scope."
+          />
+        </div>
+        <div class="delivery-stack">
+          {caseStudyContent.kpis.map((metric) => <StatCard {...metric} />)}
+        </div>
+      </div>
+    </section>
+
+    <section id="credibility" class="section-block">
+      <div class="page-shell split-section">
+        <div>
+          <SectionHeading
+            eyebrow="Credibility"
+            title="The product story leads. My fit shows up in the execution."
+            lead={profileContent.summary}
+          />
+          <div class="contact-row">
+            <a class="cta-link primary" href={`mailto:${profileContent.contact.email}?subject=BioScript case study`}>
+              Email Hardik
+            </a>
+            <a class="cta-link secondary" href={profileContent.contact.linkedin} target="_blank" rel="noreferrer">
+              LinkedIn
+            </a>
+            <a class="cta-link secondary" href={profileContent.contact.github} target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+          </div>
+        </div>
+
+        <div class="credibility-grid">
+          <article class="panel skill-panel">
+            <h3>Operating strengths</h3>
+            <ul>
+              {profileContent.skills.map((skill) => <li>{skill}</li>)}
+            </ul>
+          </article>
+          <article class="panel experience-panel">
+            <h3>Selected experience</h3>
+            <div class="experience-list">
+              {profileContent.experience.slice(0, 4).map((entry) => (
+                <section>
+                  <header>
+                    <strong>{entry.org}</strong>
+                    <span>{entry.date}</span>
+                  </header>
+                  <p>{entry.title}</p>
+                  <ul>
+                    {entry.bullets.slice(0, 2).map((bullet) => <li>{bullet}</li>)}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <SiteFooter
+    email={profileContent.contact.email}
+    linkedin={profileContent.contact.linkedin}
+    github={profileContent.contact.github}
+  />
+</BaseLayout>
+
+<style>
+  .hero-block {
+    padding-top: 2.2rem;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.95fr);
+    gap: 1.4rem;
+    align-items: start;
+  }
+
+  .hero-copy {
+    padding: 1rem 0 0;
+  }
+
+  .hero-kicker {
+    margin: 0;
+    color: var(--color-accent);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0.65rem 0 0;
+    max-width: 11ch;
+    font-size: clamp(3.8rem, 11vw, 8rem);
+    line-height: 0.86;
+    letter-spacing: -0.07em;
+  }
+
+  .hero-summary,
+  .hero-thesis {
+    max-width: 46rem;
+    line-height: 1.75;
+  }
+
+  .hero-summary {
+    margin: 1.2rem 0 0;
+    font-size: 1.26rem;
+    color: var(--color-text);
+  }
+
+  .hero-thesis {
+    margin: 1rem 0 0;
+    color: var(--color-text-soft);
+    font-size: 1rem;
+  }
+
+  .hero-actions,
+  .contact-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+  }
+
+  .hero-points {
+    display: grid;
+    gap: 0.85rem;
+    margin: 1.6rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hero-points li {
+    position: relative;
+    padding-left: 1.2rem;
+    color: var(--color-text-soft);
+    line-height: 1.75;
+  }
+
+  .hero-points li::before {
+    content: "";
+    position: absolute;
+    top: 0.72rem;
+    left: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  .hero-aside {
+    padding: 1rem;
+  }
+
+  .hero-aside-top {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero-aside-grid,
+  .delivery-stack {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .split-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.95fr);
+    gap: 1.2rem;
+    align-items: start;
+  }
+
+  .prose-panel,
+  .principle-panel,
+  .narrative-panel,
+  .skill-panel,
+  .experience-panel {
+    padding: 1.45rem;
+  }
+
+  .prose-panel p,
+  .principle-panel li,
+  .experience-panel p,
+  .experience-panel li {
+    color: var(--color-text-soft);
+    line-height: 1.75;
+  }
+
+  .prose-panel p + p {
+    margin-top: 1rem;
+  }
+
+  .solution-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .principle-panel ul,
+  .skill-panel ul,
+  .experience-panel ul {
+    margin: 1rem 0 0;
+    padding-left: 1.1rem;
+  }
+
+  .principle-panel blockquote {
+    margin: 1.2rem 0 0;
+    padding: 1rem 1.1rem;
+    border-left: 4px solid var(--color-accent);
+    background: rgba(181, 95, 47, 0.08);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .principle-panel blockquote p {
+    margin: 0;
+    color: var(--color-text);
+    font-weight: 600;
+    line-height: 1.65;
+  }
+
+  .workflow-grid {
+    margin-top: 2rem;
+  }
+
+  .credibility-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .experience-list {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .experience-list header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .experience-list span {
+    color: var(--color-text-soft);
+    font-size: 0.88rem;
+  }
+
+  .experience-list p {
+    margin: 0.3rem 0 0;
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  @media (max-width: 980px) {
+    .hero-grid,
+    .split-section,
+    .solution-grid {
+      grid-template-columns: 1fr;
+    }
+
+    h1 {
+      max-width: 100%;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .hero-block {
+      padding-top: 1.4rem;
+    }
+
+    h1 {
+      font-size: clamp(3rem, 16vw, 4.4rem);
+    }
+
+    .experience-list header {
+      flex-direction: column;
+      gap: 0.2rem;
+      align-items: flex-start;
+    }
+  }
+</style>

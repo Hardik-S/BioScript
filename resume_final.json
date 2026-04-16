@@ -1,0 +1,125 @@
+{
+  "name": "Hardik Shrestha",
+  "contact": [
+    "289-654-4428",
+    "hshrestha.hba2026@ivey.ca",
+    "linkedin.com/in/hardik-shres/",
+    "github.com/Hardik-S"
+  ],
+  "summary": "Associate program manager candidate with experience in reporting, SOPs, quality documentation, recurring operations, and cross-functional coordination across finance, data, and platform teams.",
+  "sections": [
+    {
+      "title": "Education",
+      "type": "entries",
+      "entries": [
+        {
+          "org": "Western University & Ivey Business School",
+          "location": "London, ON",
+          "date": "Sept 2020 - Apr 2026",
+          "title": "Honours Bachelor of Science, Computer Science | Honours Business Administration (HBA)",
+          "bullets": [
+            "Dean's Honour List | 3.9/4.0 cGPA | Wellington Financial LP Award"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Core Skills",
+      "type": "text",
+      "text": "Program operations, reporting, process improvement, SOPs and work instructions, QA documentation, stakeholder coordination, change management, quality improvement, Excel, VBA, SQL, Python, Power BI, Power Automate, French"
+    },
+    {
+      "title": "Experience",
+      "type": "entries",
+      "entries": [
+        {
+          "org": "Loblaw Companies Limited",
+          "location": "Brampton, ON",
+          "date": "May 2024 - Aug 2024",
+          "title": "Finance Analyst Intern, Marketing & Media Finance",
+          "bullets": [
+            "Automated media accruals, vendor accruals, and recurring Excel/VBA reporting workflows, saving 26 hours per reporting period while improving reliability for finance deliverables.",
+            "Owned recurring reporting and large-data-set reconciliation for internal stakeholders, supporting monthly finance execution.",
+            "Co-developed the winning LoblawTank proposal for a Flashfood x Too Good To Go integration, building the business case and presenting recommendations to senior strategy and sustainability leaders."
+          ]
+        },
+        {
+          "org": "SwimDrinkFish",
+          "location": "London, ON",
+          "date": "May 2025 - Aug 2025",
+          "title": "Data Analyst, Swim Guide",
+          "bullets": [
+            "Designed and maintained automated ETL and data-validation workflows across multi-source beach data, saving 20+ staff hours per week while improving operational reliability.",
+            "Led ID reconciliation and GPS mapping across 3,000+ managed beaches during a backend overhaul, improving data integrity.",
+            "Validated fixes and improved documentation during migration from manual checks to Power Automate, PostgreSQL, and Java-based workflows."
+          ]
+        },
+        {
+          "org": "Kinaxis",
+          "location": "Ottawa, ON",
+          "date": "Sept 2022 - Aug 2023",
+          "title": "Quality Assurance Intern, AI Platform",
+          "bullets": [
+            "Built automated validation workflows for AI-platform releases using Docker, Kubernetes, Java, and Git, reducing turnaround time by 80% and strengthening release-readiness discipline.",
+            "Wrote engineering tickets and supported larger-scale API testing during fast-moving release cycles.",
+            "Produced QA documentation, SOPs, work instructions, and training material for GCS/AWS migration support, improving handoffs, repeatability, and execution consistency across cloud-transition work."
+          ]
+        },
+        {
+          "org": "PointClickCare",
+          "location": "",
+          "date": "May 2022 - Aug 2022",
+          "title": "Software Engineer Co-Op, Identity Access Management",
+          "bullets": [
+            "Participated in backlog prioritization, wrote engineering tickets, and ran morning standups in an agile IAM team.",
+            "Built identity and access management features and bulk migration tooling using Azure, Java, React, Vue, JavaScript, and Postman, increasing user-migration throughput by 100x.",
+            "Supported rollout readiness through work instructions, training materials, and QA documentation for reusable workflows."
+          ]
+        },
+        {
+          "org": "P3 Adaptive",
+          "location": "Indianapolis, IN / Brampton, ON",
+          "date": "June 2021 - Oct 2021",
+          "title": "Robotic Process Automation Intern, Operations",
+          "bullets": [
+            "Built Power Automate, Selenium, and Zapier automations for client-facing workflows after gathering requirements with leadership, helping deliver secure systems on time for direct client use.",
+            "Redesigned post-training workflows and documentation, cutting manual follow-up work for all consultants by 90%."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Projects & Leadership",
+      "type": "entries",
+      "entries": [
+        {
+          "org": "Fulfillment Cost Driver Simulator",
+          "location": "",
+          "date": "Mar 2026 - Present",
+          "title": "Independent Operations Finance Project",
+          "bullets": [
+            "Built an Excel, SQL, and Python simulator translating operating inputs into weekly P/L views and variance dashboards."
+          ]
+        },
+        {
+          "org": "Corporate Climate Adaptability in Canada",
+          "location": "",
+          "date": "Mar 2025",
+          "title": "Research Project",
+          "bullets": [
+            "Authored a 30-page report synthesizing 80+ sources on Canadian corporate climate adaptation, with findings used by UN GCNC."
+          ]
+        },
+        {
+          "org": "London Chess Club",
+          "location": "London, ON",
+          "date": "Nov 2022 - Nov 2025",
+          "title": "President",
+          "bullets": [
+            "Restructured governance and launched digital systems, driving 260% year-over-year membership growth."
+          ]
+        }
+      ]
+    }
+  ]
+}

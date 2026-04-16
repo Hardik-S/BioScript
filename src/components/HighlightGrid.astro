@@ -1,0 +1,51 @@
+---
+import type { Highlight } from "@/types/content";
+
+interface Props {
+  items: Highlight[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="highlight-grid">
+  {items.map((item) => (
+    <article class="highlight panel">
+      <h3>{item.title}</h3>
+      <p>{item.detail}</p>
+    </article>
+  ))}
+</div>
+
+<style>
+  .highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .highlight {
+    padding: 1.35rem;
+  }
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h3 {
+    font-size: 1.06rem;
+  }
+
+  p {
+    margin-top: 0.7rem;
+    color: var(--color-text-soft);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 920px) {
+    .highlight-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,46 @@
+---
+interface Props {
+  label: string;
+  value: string;
+  note: string;
+}
+
+const { label, value, note } = Astro.props;
+---
+
+<article class="stat-card panel">
+  <p class="label">{label}</p>
+  <h3>{value}</h3>
+  <p class="note">{note}</p>
+</article>
+
+<style>
+  .stat-card {
+    padding: 1.35rem;
+  }
+
+  .label,
+  .note,
+  h3 {
+    margin: 0;
+  }
+
+  .label {
+    font-size: 0.78rem;
+    color: var(--color-text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+
+  h3 {
+    margin-top: 0.9rem;
+    font-size: clamp(1.55rem, 2vw, 2.1rem);
+    line-height: 1;
+  }
+
+  .note {
+    margin-top: 0.75rem;
+    color: var(--color-text-soft);
+    line-height: 1.55;
+  }
+</style>
