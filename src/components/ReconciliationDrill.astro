@@ -23,9 +23,10 @@ const acknowledgementRows = reconciliationRecords.map((record) => ({
   meta: record.acknowledgementAt,
   status: record.status,
 }));
-const clientRecords = flaggedRecords.map((record) => ({
+const clientRecords = reconciliationRecords.map((record) => ({
   caseId: record.caseId,
   status: record.status,
+  severity: record.severity,
   finding: record.finding,
   sourceSnippet: record.sourceSnippet,
   dayZeroImplication: record.dayZeroImplication,
@@ -73,7 +74,10 @@ const clientRecords = flaggedRecords.map((record) => ({
             data-record-row={row.caseId}
             data-status={row.status}
           >
-            <span>{row.caseId}</span>
+            <div class="row-top">
+              <span class="record-id">{row.caseId}</span>
+              <b class="selected-chip" data-selected-chip hidden>Selected</b>
+            </div>
             <strong>{row.primary}</strong>
             <small>{row.secondary}</small>
             <em>{row.meta}</em>
@@ -95,7 +99,10 @@ const clientRecords = flaggedRecords.map((record) => ({
             data-record-row={row.caseId}
             data-status={row.status}
           >
-            <span>{row.caseId}</span>
+            <div class="row-top">
+              <span class="record-id">{row.caseId}</span>
+              <b class="selected-chip" data-selected-chip hidden>Selected</b>
+            </div>
             <strong>{row.primary}</strong>
             <small>{row.secondary}</small>
             <em>{row.meta}</em>
@@ -117,7 +124,10 @@ const clientRecords = flaggedRecords.map((record) => ({
             data-record-row={row.caseId}
             data-status={row.status}
           >
-            <span>{row.caseId}</span>
+            <div class="row-top">
+              <span class="record-id">{row.caseId}</span>
+              <b class="selected-chip" data-selected-chip hidden>Selected</b>
+            </div>
             <strong>{row.primary}</strong>
             <small>{row.secondary}</small>
             <em>{row.meta}</em>
@@ -126,6 +136,44 @@ const clientRecords = flaggedRecords.map((record) => ({
       </div>
     </section>
   </div>
+
+  <section class="selected-record panel" data-selected-record aria-live="polite" aria-labelledby="selected-record-title">
+    <div class="panel-title">
+      <p class="kicker">Selected record</p>
+      <h2 id="selected-record-title">Ledger selection preview</h2>
+    </div>
+
+    <div class="evidence-head">
+      <div>
+        <span data-selected-case>No record selected</span>
+        <h3 data-selected-finding>Run the control or select a ledger row to inspect source evidence.</h3>
+      </div>
+      <strong data-selected-status>Waiting</strong>
+    </div>
+
+    <div class="timestamp-grid">
+      <div>
+        <span>Source receipt</span>
+        <strong data-selected-source>--</strong>
+      </div>
+      <div>
+        <span>PSP transfer</span>
+        <strong data-selected-transfer>--</strong>
+      </div>
+      <div>
+        <span>Acknowledgement</span>
+        <strong data-selected-acknowledgement>--</strong>
+      </div>
+    </div>
+
+    <blockquote data-selected-snippet>
+      Select any row in the three ledgers to keep the source, transfer, acknowledgement, and evidence view in sync.
+    </blockquote>
+
+    <p class="day-zero" data-selected-note>
+      The preview updates immediately, before the longer control-output section below.
+    </p>
+  </section>
 
   <div class="analysis-grid" data-analysis hidden>
     <section class="findings panel" aria-labelledby="findings-title">
@@ -140,7 +188,10 @@ const clientRecords = flaggedRecords.map((record) => ({
             class:list={["finding-card", index === 0 && "is-active"]}
             data-finding={record.caseId}
           >
-            <span>{record.status}</span>
+            <div class="row-top">
+              <span class="record-id">{record.status}</span>
+              <b class="selected-chip" data-selected-chip hidden>Selected</b>
+            </div>
             <strong>{record.caseId}</strong>
             <small>{record.finding}</small>
           </button>
@@ -154,8 +205,8 @@ const clientRecords = flaggedRecords.map((record) => ({
         <h2 id="evidence-title">Source-backed issue detail</h2>
       </div>
 
-      {flaggedRecords.map((record, index) => (
-        <article class:list={["evidence-record", index !== 0 && "is-hidden"]} data-detail={record.caseId}>
+      {reconciliationRecords.map((record) => (
+        <article class:list={["evidence-record", record.caseId !== flaggedRecords[0]?.caseId && "is-hidden"]} data-detail={record.caseId}>
           <div class="evidence-head">
             <div>
               <span>{record.caseId}</span>
@@ -192,6 +243,11 @@ const clientRecords = flaggedRecords.map((record) => ({
           </div>
 
           <p class="day-zero"><strong>Day 0 note:</strong> {record.dayZeroImplication}</p>
+          {record.status === "Clean" && (
+            <p class="clean-note">
+              This row reconciles cleanly. Keep it visible for comparison, but do not prepare an escalation packet.
+            </p>
+          )}
         </article>
       ))}
 
@@ -227,7 +283,16 @@ const clientRecords = flaggedRecords.map((record) => ({
     const analysis = root.querySelector("[data-analysis]");
     const packet = root.querySelector("[data-packet]");
     const packetOutput = root.querySelector("[data-packet-output]");
-    const firstRecord = clientRecords[0]?.caseId;
+    const selectedCase = root.querySelector("[data-selected-case]");
+    const selectedFinding = root.querySelector("[data-selected-finding]");
+    const selectedStatus = root.querySelector("[data-selected-status]");
+    const selectedSource = root.querySelector("[data-selected-source]");
+    const selectedTransfer = root.querySelector("[data-selected-transfer]");
+    const selectedAcknowledgement = root.querySelector("[data-selected-acknowledgement]");
+    const selectedSnippet = root.querySelector("[data-selected-snippet]");
+    const selectedNote = root.querySelector("[data-selected-note]");
+    const firstRecord = clientRecords.find((record) => record.status !== "Clean")?.caseId || clientRecords[0]?.caseId;
+    const issueCount = clientRecords.filter((record) => record.status !== "Clean").length;
     let controlHasRun = false;
     let activeRecordId = firstRecord;
 
@@ -241,7 +306,7 @@ const clientRecords = flaggedRecords.map((record) => ({
         runButton.textContent = "Re-run Control";
       }
       if (status) {
-        status.textContent = `${clientRecords.length} reconciliation issues need PV-owner review. Select a finding to inspect the source evidence.`;
+        status.textContent = `${issueCount} reconciliation issues need PV-owner review. Select a finding to inspect the source evidence.`;
       }
       if (activeRecordId) {
         selectRecord(activeRecordId);
@@ -255,17 +320,58 @@ const clientRecords = flaggedRecords.map((record) => ({
       }
 
       activeRecordId = caseId;
+      const isClean = record.status === "Clean";
       root.querySelectorAll("[data-record-row]").forEach((row) => {
-        row.classList.toggle("is-active", row.getAttribute("data-record-row") === caseId);
+        const isActive = row.getAttribute("data-record-row") === caseId;
+        row.classList.toggle("is-active", isActive);
+        row.setAttribute("aria-pressed", isActive ? "true" : "false");
+        row.querySelectorAll("[data-selected-chip]").forEach((chip) => {
+          if (chip instanceof HTMLElement) {
+            chip.hidden = !isActive;
+          }
+        });
       });
       root.querySelectorAll("[data-finding]").forEach((finding) => {
-        finding.classList.toggle("is-active", finding.getAttribute("data-finding") === caseId);
+        const isActive = finding.getAttribute("data-finding") === caseId;
+        finding.classList.toggle("is-active", isActive);
+        finding.setAttribute("aria-pressed", isActive ? "true" : "false");
+        finding.querySelectorAll("[data-selected-chip]").forEach((chip) => {
+          if (chip instanceof HTMLElement) {
+            chip.hidden = !isActive;
+          }
+        });
       });
       root.querySelectorAll("[data-detail]").forEach((detail) => {
         detail.classList.toggle("is-hidden", detail.getAttribute("data-detail") !== caseId);
       });
+      updateSelectionPreview(record);
+      if (status) {
+        status.textContent = isClean
+          ? `${caseId} reconciles cleanly across source, transfer, and acknowledgement. No escalation packet is needed.`
+          : `Inspecting ${caseId} across all ledgers. Evidence view, finding card, and packet target are synced.`;
+      }
+      if (packetButton instanceof HTMLButtonElement) {
+        packetButton.hidden = isClean;
+        packetButton.disabled = isClean;
+      }
       if (packet) {
         packet.hidden = true;
+      }
+    }
+
+    function updateSelectionPreview(record) {
+      if (selectedCase) selectedCase.textContent = record.caseId;
+      if (selectedFinding) selectedFinding.textContent = record.finding;
+      if (selectedStatus) {
+        selectedStatus.textContent = record.status === "Clean" ? "Clean record" : record.severity;
+        selectedStatus.classList.toggle("is-clean", record.status === "Clean");
+      }
+      if (selectedSource) selectedSource.textContent = record.sourceReceivedAt;
+      if (selectedTransfer) selectedTransfer.textContent = record.transferredAt;
+      if (selectedAcknowledgement) selectedAcknowledgement.textContent = record.acknowledgementAt;
+      if (selectedSnippet) selectedSnippet.textContent = record.sourceSnippet;
+      if (selectedNote) {
+        selectedNote.textContent = `Day 0 note: ${record.dayZeroImplication}`;
       }
     }
 
@@ -297,10 +403,12 @@ const clientRecords = flaggedRecords.map((record) => ({
 
     root.querySelectorAll("[data-finding]").forEach((button) => {
       button.addEventListener("click", () => {
+        activeRecordId = button.getAttribute("data-finding");
         if (!controlHasRun) {
           markControlRun();
+          return;
         }
-        selectRecord(button.getAttribute("data-finding"));
+        selectRecord(activeRecordId);
       });
     });
 
@@ -308,14 +416,12 @@ const clientRecords = flaggedRecords.map((record) => ({
       button.addEventListener("click", () => {
         const caseId = button.getAttribute("data-record-row");
         if (records.has(caseId)) {
+          activeRecordId = caseId;
           if (!controlHasRun) {
             markControlRun();
+            return;
           }
           selectRecord(caseId);
-          return;
-        }
-        if (status) {
-          status.textContent = `${caseId} reconciles cleanly. No escalation packet is needed for that row.`;
         }
       });
     });
@@ -325,6 +431,15 @@ const clientRecords = flaggedRecords.map((record) => ({
         markControlRun();
       }
       const record = records.get(activeRecordId);
+      if (record?.status === "Clean") {
+        if (status) {
+          status.textContent = `${record.caseId} is clean. No escalation packet is needed for that row.`;
+        }
+        if (packet) {
+          packet.hidden = true;
+        }
+        return;
+      }
       if (!record || !packet || !packetOutput) {
         return;
       }
@@ -493,6 +608,26 @@ const clientRecords = flaggedRecords.map((record) => ({
     text-align: left;
   }
 
+  .row-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .selected-chip {
+    flex: 0 0 auto;
+    border: 1px solid rgba(22, 50, 47, 0.28);
+    border-radius: 999px;
+    background: var(--color-text);
+    color: var(--color-inverse);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 0.12rem 0.42rem;
+    text-transform: uppercase;
+  }
+
   .ledger-row.has-finding {
     border-color: rgba(181, 95, 47, 0.34);
     background: rgba(181, 95, 47, 0.08);
@@ -501,11 +636,17 @@ const clientRecords = flaggedRecords.map((record) => ({
   .ledger-row.is-active,
   .finding-card.is-active {
     border-color: var(--color-text);
-    box-shadow: inset 4px 0 0 var(--color-accent);
+    background: rgba(22, 50, 47, 0.1);
+    box-shadow: inset 5px 0 0 var(--color-accent), 0 10px 24px rgba(22, 50, 47, 0.12);
   }
 
-  .ledger-row span,
-  .finding-card span,
+  .ledger-row.is-active strong,
+  .finding-card.is-active strong {
+    color: var(--color-text);
+  }
+
+  .ledger-row .record-id,
+  .finding-card .record-id,
   .evidence-head span,
   .timestamp-grid span,
   .criterion span {
@@ -530,6 +671,24 @@ const clientRecords = flaggedRecords.map((record) => ({
     font-size: 0.84rem;
     font-style: normal;
     line-height: 1.45;
+  }
+
+  .selected-record {
+    display: grid;
+    gap: 1rem;
+    padding: 1.15rem;
+    border-color: rgba(22, 50, 47, 0.28);
+    background: linear-gradient(135deg, rgba(250, 245, 237, 0.94), rgba(232, 215, 192, 0.74));
+  }
+
+  .selected-record .evidence-head > strong.is-clean {
+    background: rgba(40, 98, 54, 0.12);
+    color: var(--color-mint);
+  }
+
+  .selected-record .evidence-head h3 {
+    font-size: clamp(1.2rem, 2vw, 1.55rem);
+    line-height: 1.15;
   }
 
   .analysis-grid {
@@ -623,6 +782,16 @@ const clientRecords = flaggedRecords.map((record) => ({
     margin-bottom: 0;
     color: var(--color-text-soft);
     line-height: 1.75;
+  }
+
+  .clean-note {
+    margin-bottom: 0;
+    padding: 0.78rem 0.9rem;
+    border: 1px solid rgba(40, 98, 54, 0.25);
+    border-radius: var(--radius-sm);
+    background: rgba(40, 98, 54, 0.09);
+    color: var(--color-text);
+    line-height: 1.6;
   }
 
   .packet-button {
