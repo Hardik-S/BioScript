@@ -60,82 +60,103 @@ const clientRecords = reconciliationRecords.map((record) => ({
     Control has not run yet. The ledgers below are synthetic and static.
   </p>
 
-  <div class="ledger-grid" aria-label="Reconciliation ledgers">
-    <section class="ledger panel" aria-labelledby="source-ledger-title">
-      <div class="ledger-head">
-        <span>01</span>
-        <h2 id="source-ledger-title">PSP source log</h2>
+  <section class="ledger-shell" data-ledger-shell aria-labelledby="ledger-shell-title">
+    <div class="ledger-summary-bar panel">
+      <div>
+        <p class="kicker">Ledger selector</p>
+        <h2 id="ledger-shell-title">Choose the record to inspect.</h2>
+        <p data-ledger-summary>Select a row from any ledger to focus the evidence view.</p>
       </div>
-      <div class="ledger-list">
-        {sourceRows.map((row) => (
-          <button
-            type="button"
-            class:list={["ledger-row", row.status !== "Clean" && "has-finding"]}
-            data-record-row={row.caseId}
-            data-status={row.status}
-          >
-            <div class="row-top">
-              <span class="record-id">{row.caseId}</span>
-              <b class="selected-chip" data-selected-chip hidden>Selected</b>
-            </div>
-            <strong>{row.primary}</strong>
-            <small>{row.secondary}</small>
-            <em>{row.meta}</em>
-          </button>
-        ))}
-      </div>
-    </section>
+      <button
+        type="button"
+        class="change-selection"
+        data-action="toggle-ledgers"
+        aria-controls="ledger-choice-panel"
+        aria-expanded="true"
+      >
+        Collapse choices
+      </button>
+    </div>
 
-    <section class="ledger panel" aria-labelledby="transfer-ledger-title">
-      <div class="ledger-head">
-        <span>02</span>
-        <h2 id="transfer-ledger-title">Safety transfer ledger</h2>
-      </div>
-      <div class="ledger-list">
-        {transferRows.map((row) => (
-          <button
-            type="button"
-            class:list={["ledger-row", row.status !== "Clean" && "has-finding"]}
-            data-record-row={row.caseId}
-            data-status={row.status}
-          >
-            <div class="row-top">
-              <span class="record-id">{row.caseId}</span>
-              <b class="selected-chip" data-selected-chip hidden>Selected</b>
-            </div>
-            <strong>{row.primary}</strong>
-            <small>{row.secondary}</small>
-            <em>{row.meta}</em>
-          </button>
-        ))}
-      </div>
-    </section>
+    <div class="ledger-body" id="ledger-choice-panel" data-ledger-body>
+      <div class="ledger-grid" aria-label="Reconciliation ledgers">
+        <section class="ledger panel" aria-labelledby="source-ledger-title">
+          <div class="ledger-head">
+            <span>01</span>
+            <h2 id="source-ledger-title">PSP source log</h2>
+          </div>
+          <div class="ledger-list">
+            {sourceRows.map((row) => (
+              <button
+                type="button"
+                class:list={["ledger-row", row.status !== "Clean" && "has-finding"]}
+                data-record-row={row.caseId}
+                data-status={row.status}
+              >
+                <div class="row-top">
+                  <span class="record-id">{row.caseId}</span>
+                  <b class="selected-chip" data-selected-chip hidden>Selected</b>
+                </div>
+                <strong>{row.primary}</strong>
+                <small>{row.secondary}</small>
+                <em>{row.meta}</em>
+              </button>
+            ))}
+          </div>
+        </section>
 
-    <section class="ledger panel" aria-labelledby="ack-ledger-title">
-      <div class="ledger-head">
-        <span>03</span>
-        <h2 id="ack-ledger-title">Acknowledgement ledger</h2>
+        <section class="ledger panel" aria-labelledby="transfer-ledger-title">
+          <div class="ledger-head">
+            <span>02</span>
+            <h2 id="transfer-ledger-title">Safety transfer ledger</h2>
+          </div>
+          <div class="ledger-list">
+            {transferRows.map((row) => (
+              <button
+                type="button"
+                class:list={["ledger-row", row.status !== "Clean" && "has-finding"]}
+                data-record-row={row.caseId}
+                data-status={row.status}
+              >
+                <div class="row-top">
+                  <span class="record-id">{row.caseId}</span>
+                  <b class="selected-chip" data-selected-chip hidden>Selected</b>
+                </div>
+                <strong>{row.primary}</strong>
+                <small>{row.secondary}</small>
+                <em>{row.meta}</em>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section class="ledger panel" aria-labelledby="ack-ledger-title">
+          <div class="ledger-head">
+            <span>03</span>
+            <h2 id="ack-ledger-title">Acknowledgement ledger</h2>
+          </div>
+          <div class="ledger-list">
+            {acknowledgementRows.map((row) => (
+              <button
+                type="button"
+                class:list={["ledger-row", row.status !== "Clean" && "has-finding"]}
+                data-record-row={row.caseId}
+                data-status={row.status}
+              >
+                <div class="row-top">
+                  <span class="record-id">{row.caseId}</span>
+                  <b class="selected-chip" data-selected-chip hidden>Selected</b>
+                </div>
+                <strong>{row.primary}</strong>
+                <small>{row.secondary}</small>
+                <em>{row.meta}</em>
+              </button>
+            ))}
+          </div>
+        </section>
       </div>
-      <div class="ledger-list">
-        {acknowledgementRows.map((row) => (
-          <button
-            type="button"
-            class:list={["ledger-row", row.status !== "Clean" && "has-finding"]}
-            data-record-row={row.caseId}
-            data-status={row.status}
-          >
-            <div class="row-top">
-              <span class="record-id">{row.caseId}</span>
-              <b class="selected-chip" data-selected-chip hidden>Selected</b>
-            </div>
-            <strong>{row.primary}</strong>
-            <small>{row.secondary}</small>
-            <em>{row.meta}</em>
-          </button>
-        ))}
-      </div>
-    </section>
-  </div>
+    </div>
+  </section>
 
   <section class="selected-record panel" data-selected-record aria-live="polite" aria-labelledby="selected-record-title">
     <div class="panel-title">
@@ -283,6 +304,10 @@ const clientRecords = reconciliationRecords.map((record) => ({
     const analysis = root.querySelector("[data-analysis]");
     const packet = root.querySelector("[data-packet]");
     const packetOutput = root.querySelector("[data-packet-output]");
+    const ledgerShell = root.querySelector("[data-ledger-shell]");
+    const ledgerBody = root.querySelector("[data-ledger-body]");
+    const ledgerToggle = root.querySelector('[data-action="toggle-ledgers"]');
+    const ledgerSummary = root.querySelector("[data-ledger-summary]");
     const selectedCase = root.querySelector("[data-selected-case]");
     const selectedFinding = root.querySelector("[data-selected-finding]");
     const selectedStatus = root.querySelector("[data-selected-status]");
@@ -295,6 +320,28 @@ const clientRecords = reconciliationRecords.map((record) => ({
     const issueCount = clientRecords.filter((record) => record.status !== "Clean").length;
     let controlHasRun = false;
     let activeRecordId = firstRecord;
+
+    function setLedgerCollapsed(isCollapsed) {
+      if (ledgerShell) {
+        ledgerShell.classList.toggle("is-collapsed", isCollapsed);
+      }
+      if (ledgerBody instanceof HTMLElement) {
+        ledgerBody.setAttribute("aria-hidden", isCollapsed ? "true" : "false");
+      }
+      if (ledgerToggle instanceof HTMLButtonElement) {
+        ledgerToggle.textContent = isCollapsed ? "Change selection" : "Collapse choices";
+        ledgerToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+      }
+    }
+
+    function updateLedgerSummary(record) {
+      if (!ledgerSummary) return;
+      const descriptor = record.status === "Clean"
+        ? "clean across all ledgers"
+        : record.status.toLowerCase();
+      ledgerSummary.textContent =
+        `${record.caseId} selected: ${descriptor}. Re-expand to choose another record.`;
+    }
 
     function markControlRun() {
       controlHasRun = true;
@@ -354,6 +401,8 @@ const clientRecords = reconciliationRecords.map((record) => ({
         packetButton.hidden = isClean;
         packetButton.disabled = isClean;
       }
+      updateLedgerSummary(record);
+      setLedgerCollapsed(true);
       if (packet) {
         packet.hidden = true;
       }
@@ -399,6 +448,14 @@ const clientRecords = reconciliationRecords.map((record) => ({
 
     runButton?.addEventListener("click", () => {
       markControlRun();
+    });
+
+    root.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (!target.closest('[data-action="toggle-ledgers"]')) return;
+      const isCollapsed = ledgerShell?.classList.contains("is-collapsed") ?? false;
+      setLedgerCollapsed(!isCollapsed);
     });
 
     root.querySelectorAll("[data-finding]").forEach((button) => {
@@ -528,6 +585,7 @@ const clientRecords = reconciliationRecords.map((record) => ({
   }
 
   .run-control,
+  .change-selection,
   .packet-button {
     border: 0;
     border-radius: 999px;
@@ -542,10 +600,61 @@ const clientRecords = reconciliationRecords.map((record) => ({
 
   .run-control:hover,
   .run-control:focus-visible,
+  .change-selection:hover,
+  .change-selection:focus-visible,
   .packet-button:hover,
   .packet-button:focus-visible {
     background: var(--color-accent);
     transform: translateY(-1px);
+  }
+
+  .ledger-shell {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .ledger-summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+  }
+
+  .ledger-summary-bar h2 {
+    margin: 0.25rem 0 0;
+    font-size: 1.12rem;
+    line-height: 1.1;
+  }
+
+  .ledger-summary-bar p:last-child {
+    margin: 0.35rem 0 0;
+    color: var(--color-text-soft);
+    line-height: 1.55;
+  }
+
+  .ledger-body {
+    display: grid;
+    max-height: 260rem;
+    opacity: 1;
+    overflow: hidden;
+    transform: translateY(0);
+    transition:
+      max-height 420ms ease,
+      opacity 240ms ease,
+      transform 320ms ease;
+  }
+
+  .ledger-shell.is-collapsed .ledger-body {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-0.35rem);
+  }
+
+  .ledger-shell.is-collapsed .ledger-summary-bar {
+    border-color: rgba(22, 50, 47, 0.28);
+    background: rgba(250, 245, 237, 0.92);
   }
 
   .ledger-grid {
@@ -843,6 +952,7 @@ const clientRecords = reconciliationRecords.map((record) => ({
   @media (max-width: 720px) {
     .drill-hero,
     .control-bar,
+    .ledger-summary-bar,
     .evidence-head,
     .guardrail {
       align-items: stretch;
@@ -865,6 +975,7 @@ const clientRecords = reconciliationRecords.map((record) => ({
     }
 
     .run-control,
+    .change-selection,
     .packet-button,
     .home-link {
       width: 100%;
