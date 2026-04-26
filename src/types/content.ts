@@ -1,6 +1,7 @@
 export interface NavLink {
   href: string;
   label: string;
+  variant?: "accent";
 }
 
 export interface Metric {

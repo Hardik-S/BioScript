@@ -1,0 +1,29 @@
+---
+import ReconciliationDrill from "@/components/ReconciliationDrill.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { profileContent } from "@/content/profile";
+
+const pageTitle = "Ghost-Case Reconciliation Drill | Safety Intake Desk";
+const pageDescription =
+  "A front-end-only reconciliation simulation for Safety Intake Desk that proves PSP safety records do not disappear between source capture, transfer, and acknowledgement.";
+const baseUrl = import.meta.env.BASE_URL;
+const nav = [
+  { href: `${baseUrl}Next/`, label: "Next", variant: "accent" as const },
+  { href: `${baseUrl}#prototype`, label: "Demo" },
+  { href: `${baseUrl}appendix/`, label: "Appendix" },
+];
+---
+
+<BaseLayout title={pageTitle} description={pageDescription}>
+  <SiteHeader nav={nav} />
+
+  <main>
+    <div class="page-shell">
+      <ReconciliationDrill />
+    </div>
+  </main>
+
+  <SiteFooter email={profileContent.contact.email} />
+</BaseLayout>
