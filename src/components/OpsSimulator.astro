@@ -1,0 +1,1084 @@
+---
+import {
+  defaultCapacity,
+  opsRoles,
+  opsScenarios,
+  opsWorkItems,
+  triageStrategies,
+} from "@/data/opsSimulator";
+
+const clientConfig = {
+  defaultCapacity,
+  roles: opsRoles,
+  scenarios: opsScenarios,
+  strategies: triageStrategies,
+  workItems: opsWorkItems,
+};
+---
+
+<section class="ops-demo" id="ops-simulator" aria-labelledby="ops-title">
+  <div class="ops-hero">
+    <p class="kicker">Third demo</p>
+    <div>
+      <h1 id="ops-title">Care Operations Control Room</h1>
+      <p>
+        Simulate one patient-support morning and see how staffing, triage rules, and blockers change therapy-start
+        risk, callback SLA exposure, and reimbursement load.
+      </p>
+    </div>
+    <a class="home-link" href={import.meta.env.BASE_URL}>First demo</a>
+  </div>
+
+  <aside class="demo-boundary panel" aria-label="Demo boundary">
+    <strong>Static operating model only.</strong>
+    <span>
+      Synthetic, redacted data. No real patient data, backend, clinical decisions, reimbursement decisions, messages,
+      tickets, calendar actions, or production-system updates.
+    </span>
+  </aside>
+
+  <div class="snapshot-grid" aria-label="Morning load snapshot">
+    <article class="snapshot-card panel">
+      <span>Open work</span>
+      <strong data-total-work>12</strong>
+      <small data-scenario-note>One PSP-style program, one operating day.</small>
+    </article>
+    <article class="snapshot-card panel">
+      <span>Role lanes</span>
+      <strong>{opsRoles.length}</strong>
+      <small>Case management, reimbursement, nursing, pharmacy, clinic scheduling.</small>
+    </article>
+    <article class="snapshot-card panel">
+      <span>Protected window</span>
+      <strong>Today</strong>
+      <small>Manager view for same-day capacity choices.</small>
+    </article>
+  </div>
+
+  <div class="metric-grid" aria-label="Patient-support impact metrics">
+    <article class="metric-card panel">
+      <span>Therapy starts at risk</span>
+      <strong><b data-metric="therapyStartRiskBefore">0</b> -> <b data-metric="therapyStartRiskAfter">0</b></strong>
+    </article>
+    <article class="metric-card panel">
+      <span>Callback SLA risk</span>
+      <strong><b data-metric="callbackRiskBefore">0</b> -> <b data-metric="callbackRiskAfter">0</b></strong>
+    </article>
+    <article class="metric-card panel">
+      <span>Reimbursement blockers</span>
+      <strong><b data-metric="reimbursementBefore">0</b> -> <b data-metric="reimbursementAfter">0</b></strong>
+    </article>
+    <article class="metric-card panel">
+      <span>Pharmacy cutoff risk</span>
+      <strong><b data-metric="pharmacyBefore">0</b> -> <b data-metric="pharmacyAfter">0</b></strong>
+    </article>
+  </div>
+
+  <section class="control-panel panel" aria-labelledby="control-title">
+    <div class="panel-title">
+      <p class="kicker">Morning huddle controls</p>
+      <h2 id="control-title">Choose the operating pressure and routing strategy.</h2>
+    </div>
+
+    <div class="control-grid">
+      <fieldset>
+        <legend>Scenario</legend>
+        <div class="button-grid" data-scenario-buttons>
+          {opsScenarios.map((scenario) => (
+            <button
+              type="button"
+              class:list={["choice-button", scenario.id === "normalMonday" && "is-active"]}
+              data-scenario-id={scenario.id}
+              aria-pressed={scenario.id === "normalMonday" ? "true" : "false"}
+            >
+              <strong>{scenario.label}</strong>
+              <span>{scenario.note}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Triage mode</legend>
+        <div class="button-grid" data-strategy-buttons>
+          {triageStrategies.map((strategy) => (
+            <button
+              type="button"
+              class:list={["choice-button", strategy.id === "therapyStartFirst" && "is-active"]}
+              data-strategy-id={strategy.id}
+              aria-pressed={strategy.id === "therapyStartFirst" ? "true" : "false"}
+            >
+              <strong>{strategy.label}</strong>
+              <span>{strategy.note}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="capacity-shell">
+      <div>
+        <h3>Same-day capacity</h3>
+        <p>Role slots are simulated same-day work blocks, not staffing recommendations.</p>
+      </div>
+      <div class="capacity-grid">
+        {opsRoles.map((role) => (
+          <label class="capacity-control" for={`capacity-${role.id}`}>
+            <span>{role.laneLabel}</span>
+            <input
+              id={`capacity-${role.id}`}
+              type="number"
+              min="0"
+              max="6"
+              value={defaultCapacity[role.id]}
+              data-capacity-role={role.id}
+            />
+          </label>
+        ))}
+      </div>
+    </div>
+
+    <div class="rule-grid" aria-label="Hard routing rules">
+      <label>
+        <input type="checkbox" data-rule="protectStarts" checked />
+        <span>Protect first-dose starts today/tomorrow</span>
+      </label>
+      <label>
+        <input type="checkbox" data-rule="holdBlocked" checked />
+        <span>Do not assign blocked work until dependency clears</span>
+      </label>
+      <label>
+        <input type="checkbox" data-rule="reserveNurse" checked />
+        <span>Reserve one nurse slot for same-day escalation</span>
+      </label>
+    </div>
+  </section>
+
+  <section class="ops-board" aria-label="Simulated routing output">
+    <div class="queue-panel panel">
+      <div class="board-head">
+        <div>
+          <p class="kicker">Huddle board</p>
+          <h2>Ranked work queue</h2>
+        </div>
+        <span data-active-strategy>Therapy-start blockers first</span>
+      </div>
+
+      <div class="bucket-strip" aria-label="Routing state counts">
+        <span>Do now <b data-state-count="Do now">0</b></span>
+        <span>Schedule next <b data-state-count="Schedule next">0</b></span>
+        <span>Blocked <b data-state-count="Blocked">0</b></span>
+        <span>At risk <b data-state-count="At risk">0</b></span>
+        <span>Deferred <b data-state-count="Deferred">0</b></span>
+      </div>
+
+      <div class="queue-table-wrap">
+        <table class="queue-table">
+          <thead>
+            <tr>
+              <th>Work</th>
+              <th>Lane</th>
+              <th>Due</th>
+              <th>Plan</th>
+            </tr>
+          </thead>
+          <tbody data-queue-body></tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="detail-panel panel" aria-live="polite" aria-labelledby="detail-title">
+      <div class="panel-title">
+        <p class="kicker">Selected item</p>
+        <h2 id="detail-title" data-detail-work>Work item</h2>
+      </div>
+      <div class="detail-status">
+        <span data-detail-id>OPS-000</span>
+        <strong data-detail-state>Waiting</strong>
+      </div>
+      <dl class="detail-grid">
+        <div>
+          <dt>Patient reference</dt>
+          <dd data-detail-patient>--</dd>
+        </div>
+        <div>
+          <dt>Program</dt>
+          <dd data-detail-program>--</dd>
+        </div>
+        <div>
+          <dt>Owner role</dt>
+          <dd data-detail-role>--</dd>
+        </div>
+        <div>
+          <dt>Due window</dt>
+          <dd data-detail-due>--</dd>
+        </div>
+        <div>
+          <dt>Dependency</dt>
+          <dd data-detail-dependency>--</dd>
+        </div>
+        <div>
+          <dt>Patient-impact cue</dt>
+          <dd data-detail-impact>--</dd>
+        </div>
+      </dl>
+      <div class="routing-note">
+        <strong>Routing explanation</strong>
+        <ul data-detail-reasons></ul>
+      </div>
+    </aside>
+  </section>
+
+  <section class="decision-grid">
+    <article class="decision-log panel">
+      <div class="panel-title">
+        <p class="kicker">Decision log</p>
+        <h2>Why the top work moved first</h2>
+      </div>
+      <ol data-decision-log></ol>
+    </article>
+
+    <article class="manager-note panel">
+      <div class="panel-title">
+        <p class="kicker">Manager briefing</p>
+        <h2>Operational tradeoff</h2>
+      </div>
+      <p data-manager-note></p>
+    </article>
+  </section>
+</section>
+
+<script is:inline define:vars={{ clientConfig }}>
+  const root = document.getElementById("ops-simulator");
+
+  if (root) {
+    const roleMap = new Map(clientConfig.roles.map((role) => [role.id, role]));
+    const itemMap = new Map(clientConfig.workItems.map((item) => [item.id, item]));
+    const scenarioMap = new Map(clientConfig.scenarios.map((scenario) => [scenario.id, scenario]));
+    const strategyMap = new Map(clientConfig.strategies.map((strategy) => [strategy.id, strategy]));
+    const today = "2026-04-20";
+    const tomorrow = "2026-04-21";
+    const stateLabels = ["Do now", "Schedule next", "Blocked", "At risk", "Deferred"];
+
+    const state = {
+      scenarioId: "normalMonday",
+      strategyId: "therapyStartFirst",
+      selectedId: null,
+      capacity: { ...clientConfig.defaultCapacity },
+      rules: {
+        protectStarts: true,
+        holdBlocked: true,
+        reserveNurse: true,
+      },
+    };
+
+    const query = (selector) => root.querySelector(selector);
+    const queryAll = (selector) => Array.from(root.querySelectorAll(selector));
+
+    const dueMinutes = (value) => {
+      const match = value.match(/(\d{2}):(\d{2})/);
+      if (!match) return 24 * 60;
+      return Number(match[1]) * 60 + Number(match[2]);
+    };
+
+    const isProtectedStart = (item) => item.therapyStartDate === today || item.therapyStartDate === tomorrow;
+
+    const isDependencyDelayed = (item, scenario) => {
+      if (!item.dependency) return false;
+      return Boolean(scenario.delayedDependencies?.includes(item.dependency));
+    };
+
+    const roleLabel = (roleId) => roleMap.get(roleId)?.label || roleId;
+    const laneLabel = (roleId) => roleMap.get(roleId)?.laneLabel || roleLabel(roleId);
+
+    const getActiveItems = () => {
+      const scenario = scenarioMap.get(state.scenarioId);
+      return scenario.activeWorkItems.map((id) => itemMap.get(id)).filter(Boolean);
+    };
+
+    const resetScenarioCapacity = () => {
+      const scenario = scenarioMap.get(state.scenarioId);
+      clientConfig.roles.forEach((role) => {
+        const adjustment = scenario.capacityAdjustments?.[role.id] || 0;
+        state.capacity[role.id] = Math.max(0, clientConfig.defaultCapacity[role.id] + adjustment);
+        const input = query(`[data-capacity-role="${role.id}"]`);
+        if (input) input.value = state.capacity[role.id];
+      });
+    };
+
+    const scoreItem = (item, scenario, activeItems) => {
+      const due = dueMinutes(item.dueAt);
+      let score = item.slaRisk === "High" ? 45 : item.slaRisk === "Medium" ? 24 : 8;
+      const reasons = [];
+
+      if (due <= 13 * 60) {
+        score += 30;
+        reasons.push("Due before early afternoon.");
+      } else if (due <= 14 * 60) {
+        score += 24;
+        reasons.push("Due before the main same-day cutoff window.");
+      } else if (due <= 15 * 60) {
+        score += 14;
+      }
+
+      if (isProtectedStart(item)) {
+        score += 35;
+        reasons.push("Therapy start is today or tomorrow.");
+      }
+
+      if (item.sameDayCutoff) {
+        score += 26;
+        reasons.push("Same-day pharmacy or clinic cutoff is exposed.");
+      }
+
+      if (item.unblockPotential) {
+        score += 16;
+        reasons.push("A short action can unblock downstream work.");
+      }
+
+      if (item.estimatedEffort <= 25) {
+        score += 8;
+      }
+
+      if (item.impactCategory === "reimbursement") score += 12;
+      if (item.impactCategory === "callback") score += 8;
+      if (item.isRoutine) score -= 12;
+
+      if (state.strategyId === "earliestSla") {
+        score += Math.max(0, 18 - Math.floor((due - 11 * 60) / 20));
+        if (item.slaRisk === "High") reasons.push("Earliest-SLA mode favors high-risk due windows.");
+      }
+
+      if (state.strategyId === "therapyStartFirst" && isProtectedStart(item)) {
+        score += 28;
+        reasons.push("Therapy-start mode protects first-dose blockers.");
+      }
+
+      if (state.strategyId === "quickUnblocks" && (item.unblockPotential || item.estimatedEffort <= 25)) {
+        score += 24;
+        reasons.push("Quick-unblock mode favors short work that clears dependencies.");
+      }
+
+      if (state.strategyId === "balancedByRole") {
+        const roleDemand = activeItems.filter((candidate) => candidate.ownerRole === item.ownerRole).length;
+        const capacity = Math.max(1, state.capacity[item.ownerRole] || 1);
+        score -= Math.max(0, roleDemand - capacity) * 3;
+        reasons.push("Balanced mode dampens overloaded lanes.");
+      }
+
+      if (state.rules.protectStarts && item.isRoutine && activeItems.some((candidate) => isProtectedStart(candidate))) {
+        score -= 18;
+        reasons.push("Routine work waits behind protected start blockers.");
+      }
+
+      if ((item.status === "Blocked" || isDependencyDelayed(item, scenario)) && state.rules.holdBlocked) {
+        score -= 90;
+        reasons.push("Dependency is not clear, so this should not be assigned yet.");
+      }
+
+      if (!reasons.length) reasons.push(item.decisionReason);
+      return { score, reasons };
+    };
+
+    const buildPlan = () => {
+      const scenario = scenarioMap.get(state.scenarioId);
+      const activeItems = getActiveItems();
+      const scored = activeItems
+        .map((item) => ({
+          ...item,
+          ...scoreItem(item, scenario, activeItems),
+          blockedNow: state.rules.holdBlocked && (item.status === "Blocked" || isDependencyDelayed(item, scenario)),
+        }))
+        .sort((a, b) => b.score - a.score || dueMinutes(a.dueAt) - dueMinutes(b.dueAt));
+
+      const usedCapacity = Object.fromEntries(clientConfig.roles.map((role) => [role.id, 0]));
+      const planned = scored.map((item) => {
+        let routeState = "Deferred";
+        const capacity = state.capacity[item.ownerRole] || 0;
+        const nurseReserveApplies =
+          state.rules.reserveNurse &&
+          item.ownerRole === "nurse" &&
+          !isProtectedStart(item) &&
+          capacity - usedCapacity[item.ownerRole] <= 1;
+
+        if (item.blockedNow) {
+          routeState = "Blocked";
+        } else if (usedCapacity[item.ownerRole] < capacity && !nurseReserveApplies) {
+          routeState = "Do now";
+          usedCapacity[item.ownerRole] += 1;
+        } else if (item.slaRisk === "High" || isProtectedStart(item) || item.sameDayCutoff) {
+          routeState = "At risk";
+        } else if (!item.isRoutine && item.slaRisk === "Medium") {
+          routeState = "Schedule next";
+        }
+
+        if (item.isRoutine && routeState !== "Do now") {
+          routeState = "Deferred";
+        }
+
+        return { ...item, routeState };
+      });
+
+      return { planned, scenario };
+    };
+
+    const metricCounts = (items, after = false) => {
+      const exposed = (item) => !after || ["At risk", "Blocked", "Deferred"].includes(item.routeState);
+      return {
+        therapyStartRisk: items.filter((item) => isProtectedStart(item) && exposed(item)).length,
+        callbackRisk: items.filter((item) => (item.impactCategory === "callback" || item.ownerRole === "nurse") && item.slaRisk !== "Low" && exposed(item)).length,
+        reimbursement: items.filter((item) => item.impactCategory === "reimbursement" && exposed(item)).length,
+        pharmacy: items.filter((item) => item.impactCategory === "pharmacy" && item.sameDayCutoff && exposed(item)).length,
+      };
+    };
+
+    const setText = (selector, text) => {
+      const element = query(selector);
+      if (element) element.textContent = text;
+    };
+
+    const renderQueue = (planned) => {
+      const tbody = query("[data-queue-body]");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      planned.forEach((item) => {
+        const row = document.createElement("tr");
+        row.className = item.id === state.selectedId ? "is-selected" : "";
+        row.innerHTML = `
+          <td>
+            <button type="button" class="queue-select" data-work-id="${item.id}">
+              <strong>${item.id}</strong>
+              <span>${item.workType}</span>
+              <small>${item.patientImpact}</small>
+            </button>
+          </td>
+          <td>${laneLabel(item.ownerRole)}</td>
+          <td>${item.dueAt.replace("2026-04-20 ", "")}</td>
+          <td><span class="state-chip" data-state="${item.routeState}">${item.routeState}</span></td>
+        `;
+        tbody.appendChild(row);
+      });
+    };
+
+    const renderDetail = (planned) => {
+      const selected = planned.find((item) => item.id === state.selectedId) || planned[0];
+      if (!selected) return;
+      state.selectedId = selected.id;
+
+      setText("[data-detail-work]", selected.workType);
+      setText("[data-detail-id]", selected.id);
+      setText("[data-detail-state]", selected.routeState);
+      setText("[data-detail-patient]", selected.patientRef);
+      setText("[data-detail-program]", selected.program);
+      setText("[data-detail-role]", roleLabel(selected.ownerRole));
+      setText("[data-detail-due]", selected.dueAt);
+      setText("[data-detail-dependency]", selected.dependency || "No external dependency");
+      setText("[data-detail-impact]", selected.patientImpact);
+
+      const reasons = query("[data-detail-reasons]");
+      if (reasons) {
+        reasons.innerHTML = "";
+        [selected.decisionReason, ...selected.reasons, "Not a clinical decision; program owner can override."].slice(0, 4).forEach((reason) => {
+          const item = document.createElement("li");
+          item.textContent = reason;
+          reasons.appendChild(item);
+        });
+      }
+    };
+
+    const renderDecisionLog = (planned) => {
+      const log = query("[data-decision-log]");
+      if (!log) return;
+      log.innerHTML = "";
+      planned.slice(0, 5).forEach((item) => {
+        const entry = document.createElement("li");
+        entry.innerHTML = `<strong>${item.id} - ${item.routeState}</strong><span>${item.reasons[0] || item.decisionReason}</span>`;
+        log.appendChild(entry);
+      });
+    };
+
+    const renderManagerNote = (planned, before, after) => {
+      const rolePressure = clientConfig.roles
+        .map((role) => {
+          const demand = planned.filter((item) => item.ownerRole === role.id && item.routeState !== "Blocked").length;
+          return { label: role.laneLabel, gap: demand - (state.capacity[role.id] || 0) };
+        })
+        .sort((a, b) => b.gap - a.gap)[0];
+      const pressureSentence =
+        rolePressure && rolePressure.gap > 0
+          ? `${rolePressure.label} is the main capacity pressure.`
+          : "Capacity is balanced across the open lanes.";
+      const note =
+        `With current staffing, therapy-start risk drops from ${before.therapyStartRisk} to ${after.therapyStartRisk}. ` +
+        `${pressureSentence} Keep one same-day nurse slot protected when first-dose support is still open.`;
+      setText("[data-manager-note]", note);
+    };
+
+    const render = () => {
+      const { planned, scenario } = buildPlan();
+      if (!state.selectedId || !planned.some((item) => item.id === state.selectedId)) {
+        state.selectedId = planned[0]?.id || null;
+      }
+
+      const before = metricCounts(planned, false);
+      const after = metricCounts(planned, true);
+      setText("[data-total-work]", String(planned.length));
+      setText("[data-scenario-note]", scenario.note);
+      setText('[data-metric="therapyStartRiskBefore"]', String(before.therapyStartRisk));
+      setText('[data-metric="therapyStartRiskAfter"]', String(after.therapyStartRisk));
+      setText('[data-metric="callbackRiskBefore"]', String(before.callbackRisk));
+      setText('[data-metric="callbackRiskAfter"]', String(after.callbackRisk));
+      setText('[data-metric="reimbursementBefore"]', String(before.reimbursement));
+      setText('[data-metric="reimbursementAfter"]', String(after.reimbursement));
+      setText('[data-metric="pharmacyBefore"]', String(before.pharmacy));
+      setText('[data-metric="pharmacyAfter"]', String(after.pharmacy));
+      setText("[data-active-strategy]", strategyMap.get(state.strategyId)?.label || "Triage mode");
+
+      stateLabels.forEach((label) => {
+        setText(`[data-state-count="${label}"]`, String(planned.filter((item) => item.routeState === label).length));
+      });
+
+      renderQueue(planned);
+      renderDetail(planned);
+      renderDecisionLog(planned);
+      renderManagerNote(planned, before, after);
+    };
+
+    root.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const scenarioButton = target.closest("[data-scenario-id]");
+      if (scenarioButton) {
+        state.scenarioId = scenarioButton.getAttribute("data-scenario-id");
+        queryAll("[data-scenario-id]").forEach((button) => {
+          const active = button.getAttribute("data-scenario-id") === state.scenarioId;
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+        state.selectedId = null;
+        resetScenarioCapacity();
+        render();
+        return;
+      }
+
+      const strategyButton = target.closest("[data-strategy-id]");
+      if (strategyButton) {
+        state.strategyId = strategyButton.getAttribute("data-strategy-id");
+        queryAll("[data-strategy-id]").forEach((button) => {
+          const active = button.getAttribute("data-strategy-id") === state.strategyId;
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+        render();
+        return;
+      }
+
+      const rowButton = target.closest("[data-work-id]");
+      if (rowButton) {
+        state.selectedId = rowButton.getAttribute("data-work-id");
+        render();
+      }
+    });
+
+    root.addEventListener("keydown", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const rowButton = target.closest("[data-work-id]");
+      if (!rowButton || (event.key !== "Enter" && event.key !== " ")) return;
+      event.preventDefault();
+      state.selectedId = rowButton.getAttribute("data-work-id");
+      render();
+    });
+
+    queryAll("[data-capacity-role]").forEach((input) => {
+      input.addEventListener("input", () => {
+        state.capacity[input.getAttribute("data-capacity-role")] = Math.max(0, Number(input.value || 0));
+        render();
+      });
+    });
+
+    queryAll("[data-rule]").forEach((input) => {
+      input.addEventListener("change", () => {
+        state.rules[input.getAttribute("data-rule")] = input.checked;
+        render();
+      });
+    });
+
+    resetScenarioCapacity();
+    render();
+  }
+</script>
+
+<style>
+  .ops-demo {
+    display: grid;
+    gap: 1rem;
+    padding: 2rem 0 var(--space-section);
+  }
+
+  .ops-hero {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: end;
+    padding: 2rem 0 0.6rem;
+  }
+
+  .kicker {
+    margin: 0;
+    color: var(--color-accent);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .ops-hero .kicker {
+    grid-column: 1 / -1;
+  }
+
+  .ops-hero h1 {
+    margin: 0;
+    max-width: 12ch;
+    font-size: clamp(3.4rem, 9vw, 7rem);
+    line-height: 0.9;
+    letter-spacing: -0.07em;
+  }
+
+  .ops-hero p {
+    max-width: 56rem;
+    margin: 1rem 0 0;
+    color: var(--color-text-soft);
+    font-size: 1.06rem;
+    line-height: 1.75;
+  }
+
+  .home-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.72rem 1rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .demo-boundary {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 1rem 1.2rem;
+    color: var(--color-text-soft);
+    line-height: 1.55;
+  }
+
+  .demo-boundary strong {
+    color: var(--color-text);
+    white-space: nowrap;
+  }
+
+  .snapshot-grid,
+  .metric-grid,
+  .decision-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .metric-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .snapshot-card,
+  .metric-card {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.1rem;
+  }
+
+  .snapshot-card span,
+  .metric-card span,
+  .detail-grid dt {
+    color: var(--color-text-soft);
+    font-size: 0.82rem;
+  }
+
+  .snapshot-card strong,
+  .metric-card strong {
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+    line-height: 1;
+  }
+
+  .metric-card b {
+    font-weight: 800;
+  }
+
+  .snapshot-card small {
+    color: var(--color-text-soft);
+    line-height: 1.45;
+  }
+
+  .control-panel {
+    display: grid;
+    gap: 1.2rem;
+    padding: 1.35rem;
+  }
+
+  .panel-title h2,
+  .board-head h2 {
+    margin: 0.25rem 0 0;
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .control-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  legend {
+    margin-bottom: 0.55rem;
+    font-weight: 700;
+  }
+
+  .button-grid {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .choice-button {
+    display: grid;
+    gap: 0.24rem;
+    width: 100%;
+    padding: 0.86rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    background: rgba(250, 245, 237, 0.72);
+    color: var(--color-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+  }
+
+  .choice-button span {
+    color: var(--color-text-soft);
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+
+  .choice-button:hover,
+  .choice-button:focus-visible,
+  .choice-button.is-active {
+    border-color: rgba(181, 95, 47, 0.48);
+    background: var(--color-accent-soft);
+  }
+
+  .choice-button:hover,
+  .choice-button:focus-visible {
+    transform: translateY(-1px);
+  }
+
+  .capacity-shell {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    background: rgba(250, 245, 237, 0.58);
+  }
+
+  .capacity-shell h3,
+  .capacity-shell p {
+    margin: 0;
+  }
+
+  .capacity-shell p {
+    color: var(--color-text-soft);
+  }
+
+  .capacity-grid,
+  .rule-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .capacity-control,
+  .rule-grid label {
+    display: grid;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .capacity-control span {
+    font-size: 0.82rem;
+    line-height: 1.25;
+  }
+
+  .capacity-control input {
+    width: 100%;
+    padding: 0.62rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 12px;
+    background: rgba(255, 252, 246, 0.86);
+    color: var(--color-text);
+    font: inherit;
+  }
+
+  .rule-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .rule-grid label {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    padding: 0.75rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-soft);
+    line-height: 1.4;
+  }
+
+  .ops-board {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(22rem, 0.75fr);
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .queue-panel,
+  .detail-panel,
+  .decision-log,
+  .manager-note {
+    padding: 1.25rem;
+  }
+
+  .board-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .board-head > span {
+    padding: 0.55rem 0.75rem;
+    border-radius: 999px;
+    background: var(--color-text);
+    color: var(--color-inverse);
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .bucket-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+  }
+
+  .bucket-strip span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.62rem;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    color: var(--color-text-soft);
+    font-size: 0.82rem;
+  }
+
+  .bucket-strip b {
+    color: var(--color-text);
+  }
+
+  .queue-table-wrap {
+    overflow-x: auto;
+  }
+
+  .queue-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 42rem;
+  }
+
+  .queue-table th,
+  .queue-table td {
+    padding: 0.72rem 0.6rem;
+    border-top: 1px solid var(--color-line);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .queue-table th {
+    color: var(--color-text-soft);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+  }
+
+  .queue-table tr.is-selected td {
+    background: rgba(181, 95, 47, 0.1);
+  }
+
+  .queue-select {
+    display: grid;
+    gap: 0.22rem;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .queue-select small {
+    color: var(--color-text-soft);
+    line-height: 1.35;
+  }
+
+  .state-chip {
+    display: inline-flex;
+    padding: 0.38rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(22, 50, 47, 0.1);
+    color: var(--color-text);
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .state-chip[data-state="Do now"] {
+    background: rgba(46, 99, 91, 0.18);
+    color: var(--color-mint);
+  }
+
+  .state-chip[data-state="At risk"] {
+    background: rgba(181, 95, 47, 0.22);
+    color: var(--color-accent);
+  }
+
+  .state-chip[data-state="Blocked"] {
+    background: rgba(22, 50, 47, 0.16);
+  }
+
+  .detail-status {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 0.8rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-text);
+    color: var(--color-inverse);
+  }
+
+  .detail-grid {
+    display: grid;
+    gap: 0.8rem;
+    margin: 0;
+  }
+
+  .detail-grid div {
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .detail-grid dt,
+  .detail-grid dd {
+    margin: 0;
+  }
+
+  .detail-grid dd {
+    margin-top: 0.18rem;
+    line-height: 1.4;
+  }
+
+  .routing-note {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    background: rgba(250, 245, 237, 0.62);
+  }
+
+  .routing-note ul,
+  .decision-log ol {
+    display: grid;
+    gap: 0.65rem;
+    margin: 0.75rem 0 0;
+    padding-left: 1.1rem;
+  }
+
+  .routing-note li,
+  .decision-log li,
+  .manager-note p {
+    color: var(--color-text-soft);
+    line-height: 1.55;
+  }
+
+  .decision-log li strong,
+  .decision-log li span {
+    display: block;
+  }
+
+  .decision-log li strong {
+    color: var(--color-text);
+  }
+
+  .manager-note p {
+    margin: 1rem 0 0;
+    font-size: 1.05rem;
+  }
+
+  @media (max-width: 1040px) {
+    .metric-grid,
+    .capacity-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .control-grid,
+    .ops-board,
+    .decision-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .ops-hero,
+    .snapshot-grid,
+    .metric-grid,
+    .capacity-grid,
+    .rule-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ops-hero h1 {
+      max-width: 100%;
+      font-size: clamp(2.8rem, 15vw, 4rem);
+    }
+
+    .demo-boundary {
+      align-items: start;
+      flex-direction: column;
+    }
+
+    .board-head {
+      flex-direction: column;
+    }
+  }
+</style>

@@ -1,18 +1,18 @@
 ---
-import ReconciliationDrill from "@/components/ReconciliationDrill.astro";
+import OpsSimulator from "@/components/OpsSimulator.astro";
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { profileContent } from "@/content/profile";
 
-const pageTitle = "Ghost-Case Reconciliation Drill | Safety Intake Desk";
+const pageTitle = "Care Operations Control Room | Safety Intake Desk";
 const pageDescription =
-  "A front-end-only reconciliation simulation for Safety Intake Desk that proves PSP safety records do not disappear between source capture, transfer, and acknowledgement.";
+  "A front-end-only patient-support load simulator for manager-level prioritization across one operating day.";
 const baseUrl = import.meta.env.BASE_URL;
 const nav = [
-  { href: `${baseUrl}Next/`, label: "Next", variant: "accent" as const },
-  { href: `${baseUrl}Ops/`, label: "Ops" },
-  { href: `${baseUrl}#prototype`, label: "Demo" },
+  { href: baseUrl, label: "Safety Intake" },
+  { href: `${baseUrl}Next/`, label: "Ghost Case" },
+  { href: `${baseUrl}Ops/`, label: "Ops", variant: "accent" as const },
   { href: `${baseUrl}appendix/`, label: "Appendix" },
 ];
 ---
@@ -22,7 +22,7 @@ const nav = [
 
   <main>
     <div class="page-shell">
-      <ReconciliationDrill />
+      <OpsSimulator />
     </div>
   </main>
 
