@@ -20,7 +20,13 @@ const baseUrl = import.meta.env.BASE_URL;
     </a>
     <nav aria-label="Primary" class="site-nav">
       {nav.map((item) => (
-        <a class:list={[item.variant === "accent" && "nav-accent"]} href={item.href}>{item.label}</a>
+        <a
+          aria-current={item.variant === "accent" ? "page" : undefined}
+          class:list={[item.variant === "accent" && "nav-accent"]}
+          href={item.href}
+        >
+          {item.label}
+        </a>
       ))}
     </nav>
   </div>

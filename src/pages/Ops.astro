@@ -3,18 +3,14 @@ import OpsSimulator from "@/components/OpsSimulator.astro";
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getPrimaryNav } from "@/content/navigation";
 import { profileContent } from "@/content/profile";
 
 const pageTitle = "Care Operations Control Room | Safety Intake Desk";
 const pageDescription =
   "A front-end-only patient-support load simulator for manager-level prioritization across one operating day.";
 const baseUrl = import.meta.env.BASE_URL;
-const nav = [
-  { href: baseUrl, label: "Safety Intake" },
-  { href: `${baseUrl}Next/`, label: "Ghost Case" },
-  { href: `${baseUrl}Ops/`, label: "Ops", variant: "accent" as const },
-  { href: `${baseUrl}appendix/`, label: "Appendix" },
-];
+const nav = getPrimaryNav("ops", baseUrl);
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription}>

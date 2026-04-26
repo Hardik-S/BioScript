@@ -4,18 +4,14 @@ import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { caseStudyContent } from "@/content/caseStudy";
+import { getPrimaryNav } from "@/content/navigation";
 import { profileContent } from "@/content/profile";
 
 const pageTitle = "Safety Intake Desk | BioScript Case-Study MVP";
 const pageDescription =
   "A product-led GitHub Pages case study for a focused BioScript MVP: Safety Intake Desk.";
 const baseUrl = import.meta.env.BASE_URL;
-const nav = [
-  { href: `${baseUrl}Next/`, label: "Next", variant: "accent" as const },
-  { href: `${baseUrl}Ops/`, label: "Ops" },
-  { href: "#prototype", label: "Demo" },
-  { href: `${baseUrl}appendix/`, label: "Appendix" },
-];
+const nav = getPrimaryNav("demo", baseUrl);
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription}>
