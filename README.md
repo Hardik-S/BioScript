@@ -15,6 +15,28 @@ npm run dev
 npm run build
 ```
 
+## Demo Surface
+
+The app is organized as a small route set so each demo can stay focused:
+
+- `/` - Safety Intake Desk case-study landing page and guided intake prototype.
+- `/Next/` - Ghost-case reconciliation drill for source, transfer, and acknowledgement checks.
+- `/Ops/` - Care Operations Control Room simulator for manager-level daily prioritization.
+- `/appendix/` - Supporting rationale, workflow notes, delivery assumptions, and risk register.
+
+When running locally, Astro serves these routes from the site root. In GitHub Pages builds, the configured base path makes the same routes available under `/BioScript/`.
+
+## Verification
+
+Before publishing a change, run:
+
+```bash
+npm ci
+npm run build
+```
+
+The deployment workflow uses the same build command before uploading the `dist` artifact to GitHub Pages.
+
 ## Deployment
 
 The site is configured for GitHub Pages and assumes the repository name is `BioScript`.
