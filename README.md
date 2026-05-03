@@ -1,6 +1,6 @@
 # BioScript Safety Intake Desk
 
-Product-led case-study site for a GitHub Pages-hosted MVP of **Safety Intake Desk**.
+Product-led case-study site for a hosted MVP of **Safety Intake Desk**.
 
 ## Local Development
 
@@ -17,8 +17,14 @@ npm run build
 
 ## Deployment
 
-The site is configured for GitHub Pages and assumes the repository name is `BioScript`.
+Vercel is the primary deployment target. The site builds as a static Astro app with:
 
-Expected URL:
+```bash
+npm run build
+```
+
+GitHub Pages remains configured as an automatic backup deployment and assumes the repository name is `BioScript`.
+
+Backup URL:
 
 `https://hardik-s.github.io/BioScript/`

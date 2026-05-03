@@ -7,9 +7,9 @@ const primaryNavItems: Array<{
   label: string;
   href: (baseUrl: string) => string;
 }> = [
-  { id: "next", label: "Next", href: (baseUrl) => `${baseUrl}Next/` },
-  { id: "ops", label: "Ops", href: (baseUrl) => `${baseUrl}Ops/` },
-  { id: "demo", label: "Demo", href: (baseUrl) => `${baseUrl}#prototype` },
+  { id: "demo", label: "Intake", href: (baseUrl) => `${baseUrl}#prototype` },
+  { id: "next", label: "Reconciliation", href: (baseUrl) => `${baseUrl}Next/` },
+  { id: "ops", label: "Operations", href: (baseUrl) => `${baseUrl}Ops/` },
   { id: "appendix", label: "Appendix", href: (baseUrl) => `${baseUrl}appendix/` },
 ];
 

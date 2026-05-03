@@ -1,6 +1,57 @@
 import type { AppendixSection, RiskItem } from "@/types/content";
 import { caseStudyContent } from "@/content/caseStudy";
 
+export const demoAppendixSections = [
+  {
+    id: "intake",
+    navLabel: "Intake",
+    title: "Safety Intake Desk",
+    routeLabel: "Main demo",
+    href: (baseUrl: string) => `${baseUrl}#prototype`,
+    purpose:
+      "Shows the first-mile adverse-event intake workflow: messy source text, model-assisted draft fields, reviewer confirmation, save-incomplete state, follow-up, and handoff readiness.",
+    bestFor:
+      "Explaining why the product starts at capture quality instead of trying to replace the downstream pharmacovigilance stack.",
+    proofPoints: [
+      "Separates model-populated fields from fields trusted for handoff.",
+      "Preserves incomplete cases instead of forcing false completion.",
+      "Makes reviewer queueing, follow-up, export, and audit context visible in one static prototype.",
+    ],
+  },
+  {
+    id: "reconciliation",
+    navLabel: "Reconciliation",
+    title: "Ghost-Case Reconciliation Drill",
+    routeLabel: "Control demo",
+    href: (baseUrl: string) => `${baseUrl}Next/`,
+    purpose:
+      "Pressure-tests whether safety records can disappear between source capture, transfer evidence, and downstream acknowledgement.",
+    bestFor:
+      "Showing operating control thinking: not just intake UI, but evidence, exceptions, and escalation when the handoff path breaks.",
+    proofPoints: [
+      "Compares source logs, transfer ledgers, and acknowledgement records side by side.",
+      "Lets the reviewer inspect flagged records rather than trusting a summary metric.",
+      "Keeps the output framed as human control support, not automated regulatory decisioning.",
+    ],
+  },
+  {
+    id: "operations",
+    navLabel: "Operations",
+    title: "Care Operations Control Room",
+    routeLabel: "Manager demo",
+    href: (baseUrl: string) => `${baseUrl}Ops/`,
+    purpose:
+      "Simulates one patient-support operating day so a manager can see how staffing, triage rules, and blockers affect same-day work.",
+    bestFor:
+      "Showing broader usefulness to BioScript beyond adverse-event intake: prioritization, capacity tradeoffs, therapy-start risk, callback exposure, and reimbursement blockers.",
+    proofPoints: [
+      "Turns a queue of synthetic patient-support work into a priority recommendation.",
+      "Makes tradeoffs visible across case management, nursing, pharmacy, reimbursement, and scheduling lanes.",
+      "Keeps the simulator front-end-only and explicitly synthetic.",
+    ],
+  },
+];
+
 export const appendixSections: AppendixSection[] = [
   {
     title: "Problem framing",
