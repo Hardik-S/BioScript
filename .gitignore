@@ -4,3 +4,7 @@ dist/
 .vercel/
 .DS_Store
 Thumbs.db
+handoff-gpt55-pro-*/
+handoff-gpt55-pro-*.zip
+local-job-handoff-*/
+preview*.log
