@@ -14,7 +14,7 @@ const baseUrl = import.meta.env.BASE_URL;
 const nav = getPrimaryNav("demo", baseUrl);
 ---
 
-<BaseLayout title={pageTitle} description={pageDescription}>
+<BaseLayout title={pageTitle} description={pageDescription} theme="intake">
   <SiteHeader nav={nav} />
 
   <main>
@@ -63,6 +63,7 @@ const nav = getPrimaryNav("demo", baseUrl);
   h1 {
     margin: 0;
     max-width: 11ch;
+    font-family: var(--font-display);
     font-size: clamp(3.8rem, 11vw, 8rem);
     line-height: 0.86;
     letter-spacing: -0.07em;

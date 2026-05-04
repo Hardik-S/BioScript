@@ -11,7 +11,7 @@ const baseUrl = import.meta.env.BASE_URL;
 const nav = getPrimaryNav("appendix", baseUrl);
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} theme="appendix">
   <SiteHeader nav={nav} />
 
   <main id="top" class="section-block">
@@ -33,7 +33,7 @@ const nav = getPrimaryNav("appendix", baseUrl);
 
       <section class="demo-appendix-grid" aria-label="Demo appendix notes">
         {demoAppendixSections.map((demo) => (
-          <article class="panel demo-appendix-card" id={`demo-${demo.id}`}>
+          <article class="panel demo-appendix-card" id={`demo-${demo.id}`} data-demo-theme={demo.id}>
             <div class="demo-card-head">
               <p>{demo.routeLabel}</p>
               <h2>{demo.title}</h2>
@@ -185,20 +185,39 @@ const nav = getPrimaryNav("appendix", baseUrl);
     gap: 0.55rem;
   }
 
-  .demo-card-head p {
-    margin: 0;
-    color: var(--color-accent);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-
   .demo-appendix-card {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    border-color: color-mix(in srgb, var(--card-accent, var(--color-line-strong)) 24%, var(--color-line));
+    background:
+      linear-gradient(180deg, var(--card-accent-soft, transparent), transparent 42%),
+      var(--panel-fill);
     scroll-margin-top: 9rem;
+  }
+
+  .demo-appendix-card[data-demo-theme="intake"] {
+    --card-accent: #b55f2f;
+    --card-accent-soft: rgba(181, 95, 47, 0.15);
+  }
+
+  .demo-appendix-card[data-demo-theme="reconciliation"] {
+    --card-accent: #2f7380;
+    --card-accent-soft: rgba(47, 115, 128, 0.15);
+  }
+
+  .demo-appendix-card[data-demo-theme="operations"] {
+    --card-accent: #6b6741;
+    --card-accent-soft: rgba(107, 103, 65, 0.16);
+  }
+
+  .demo-card-head p {
+    margin: 0;
+    color: var(--card-accent, var(--color-accent));
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
 
   .demo-appendix-card dl {
