@@ -504,3 +504,240 @@ export const opsScenarios: OpsScenario[] = [
     capacityAdjustments: { pharmacy: -1 },
   },
 ];
+
+export type OpsRouteState = "Do now" | "Schedule next" | "Blocked" | "At risk" | "Deferred";
+
+export interface OpsRules {
+  protectStarts: boolean;
+  holdBlocked: boolean;
+  reserveNurse: boolean;
+}
+
+export interface OpsPlanState {
+  scenarioId: OpsScenarioId;
+  strategyId: TriageStrategyId;
+  capacity: Record<OpsRoleId, number>;
+  rules: OpsRules;
+}
+
+export interface PlannedOpsWorkItem extends OpsWorkItem {
+  score: number;
+  reasons: string[];
+  blockedNow: boolean;
+  routeState: OpsRouteState;
+}
+
+export interface OpsMetricCounts {
+  therapyStartRisk: number;
+  callbackRisk: number;
+  reimbursement: number;
+  pharmacy: number;
+}
+
+export interface OpsPlan {
+  planned: PlannedOpsWorkItem[];
+  scenario: OpsScenario;
+}
+
+export const opsStateLabels: OpsRouteState[] = ["Do now", "Schedule next", "Blocked", "At risk", "Deferred"];
+
+export const defaultOpsRules: OpsRules = {
+  protectStarts: true,
+  holdBlocked: true,
+  reserveNurse: true,
+};
+
+export const defaultOpsPlanState: OpsPlanState = {
+  scenarioId: "normalMonday",
+  strategyId: "therapyStartFirst",
+  capacity: { ...defaultCapacity },
+  rules: { ...defaultOpsRules },
+};
+
+export const roleLabel = (roleId: OpsRoleId): string =>
+  opsRoles.find((role) => role.id === roleId)?.label || roleId;
+
+export const laneLabel = (roleId: OpsRoleId): string =>
+  opsRoles.find((role) => role.id === roleId)?.laneLabel || roleLabel(roleId);
+
+export const getOpsCapacityForScenario = (scenarioId: OpsScenarioId): Record<OpsRoleId, number> => {
+  const scenario = opsScenarios.find((item) => item.id === scenarioId) || opsScenarios[0];
+  return Object.fromEntries(
+    opsRoles.map((role) => [
+      role.id,
+      Math.max(0, defaultCapacity[role.id] + (scenario.capacityAdjustments?.[role.id] || 0)),
+    ]),
+  ) as Record<OpsRoleId, number>;
+};
+
+const today = "2026-04-20";
+const tomorrow = "2026-04-21";
+
+const dueMinutes = (value: string): number => {
+  const match = value.match(/(\d{2}):(\d{2})/);
+  if (!match) return 24 * 60;
+  return Number(match[1]) * 60 + Number(match[2]);
+};
+
+const isProtectedStart = (item: OpsWorkItem): boolean =>
+  item.therapyStartDate === today || item.therapyStartDate === tomorrow;
+
+const isDependencyDelayed = (item: OpsWorkItem, scenario: OpsScenario): boolean => {
+  if (!item.dependency) return false;
+  return Boolean(scenario.delayedDependencies?.includes(item.dependency));
+};
+
+const scoreOpsItem = (
+  item: OpsWorkItem,
+  scenario: OpsScenario,
+  activeItems: OpsWorkItem[],
+  state: OpsPlanState,
+): { score: number; reasons: string[] } => {
+  const due = dueMinutes(item.dueAt);
+  let score = item.slaRisk === "High" ? 45 : item.slaRisk === "Medium" ? 24 : 8;
+  const reasons: string[] = [];
+
+  if (due <= 13 * 60) {
+    score += 30;
+    reasons.push("Due before early afternoon.");
+  } else if (due <= 14 * 60) {
+    score += 24;
+    reasons.push("Due before the main same-day cutoff window.");
+  } else if (due <= 15 * 60) {
+    score += 14;
+  }
+
+  if (isProtectedStart(item)) {
+    score += 35;
+    reasons.push("Therapy start is today or tomorrow.");
+  }
+
+  if (item.sameDayCutoff) {
+    score += 26;
+    reasons.push("Same-day pharmacy or clinic cutoff is exposed.");
+  }
+
+  if (item.unblockPotential) {
+    score += 16;
+    reasons.push("A short action can unblock downstream work.");
+  }
+
+  if (item.estimatedEffort <= 25) {
+    score += 8;
+  }
+
+  if (item.impactCategory === "reimbursement") score += 12;
+  if (item.impactCategory === "callback") score += 8;
+  if (item.isRoutine) score -= 12;
+
+  if (state.strategyId === "earliestSla") {
+    score += Math.max(0, 18 - Math.floor((due - 11 * 60) / 20));
+    if (item.slaRisk === "High") reasons.push("Earliest-SLA mode favors high-risk due windows.");
+  }
+
+  if (state.strategyId === "therapyStartFirst" && isProtectedStart(item)) {
+    score += 28;
+    reasons.push("Therapy-start mode protects first-dose blockers.");
+  }
+
+  if (state.strategyId === "quickUnblocks" && (item.unblockPotential || item.estimatedEffort <= 25)) {
+    score += 24;
+    reasons.push("Quick-unblock mode favors short work that clears dependencies.");
+  }
+
+  if (state.strategyId === "balancedByRole") {
+    const roleDemand = activeItems.filter((candidate) => candidate.ownerRole === item.ownerRole).length;
+    const capacity = Math.max(1, state.capacity[item.ownerRole] || 1);
+    score -= Math.max(0, roleDemand - capacity) * 3;
+    reasons.push("Balanced mode dampens overloaded lanes.");
+  }
+
+  if (state.rules.protectStarts && item.isRoutine && activeItems.some((candidate) => isProtectedStart(candidate))) {
+    score -= 18;
+    reasons.push("Routine work waits behind protected start blockers.");
+  }
+
+  if ((item.status === "Blocked" || isDependencyDelayed(item, scenario)) && state.rules.holdBlocked) {
+    score -= 90;
+    reasons.push("Dependency is not clear, so this should not be assigned yet.");
+  }
+
+  if (!reasons.length) reasons.push(item.decisionReason);
+  return { score, reasons };
+};
+
+export const buildOpsPlan = (state: OpsPlanState = defaultOpsPlanState): OpsPlan => {
+  const scenario = opsScenarios.find((item) => item.id === state.scenarioId) || opsScenarios[0];
+  const activeItems = scenario.activeWorkItems
+    .map((id) => opsWorkItems.find((item) => item.id === id))
+    .filter((item): item is OpsWorkItem => Boolean(item));
+  const scored = activeItems
+    .map((item) => ({
+      ...item,
+      ...scoreOpsItem(item, scenario, activeItems, state),
+      blockedNow: state.rules.holdBlocked && (item.status === "Blocked" || isDependencyDelayed(item, scenario)),
+    }))
+    .sort((a, b) => b.score - a.score || dueMinutes(a.dueAt) - dueMinutes(b.dueAt));
+
+  const usedCapacity = Object.fromEntries(opsRoles.map((role) => [role.id, 0])) as Record<OpsRoleId, number>;
+  const planned = scored.map((item) => {
+    let routeState: OpsRouteState = "Deferred";
+    const capacity = state.capacity[item.ownerRole] || 0;
+    const nurseReserveApplies =
+      state.rules.reserveNurse &&
+      item.ownerRole === "nurse" &&
+      !isProtectedStart(item) &&
+      capacity - usedCapacity[item.ownerRole] <= 1;
+
+    if (item.blockedNow) {
+      routeState = "Blocked";
+    } else if (usedCapacity[item.ownerRole] < capacity && !nurseReserveApplies) {
+      routeState = "Do now";
+      usedCapacity[item.ownerRole] += 1;
+    } else if (item.slaRisk === "High" || isProtectedStart(item) || item.sameDayCutoff) {
+      routeState = "At risk";
+    } else if (!item.isRoutine && item.slaRisk === "Medium") {
+      routeState = "Schedule next";
+    }
+
+    if (item.isRoutine && routeState !== "Do now") {
+      routeState = "Deferred";
+    }
+
+    return { ...item, routeState };
+  });
+
+  return { planned, scenario };
+};
+
+export const getOpsMetricCounts = (items: PlannedOpsWorkItem[], after = false): OpsMetricCounts => {
+  const exposed = (item: PlannedOpsWorkItem) => !after || ["At risk", "Blocked", "Deferred"].includes(item.routeState);
+  return {
+    therapyStartRisk: items.filter((item) => isProtectedStart(item) && exposed(item)).length,
+    callbackRisk: items.filter((item) => (item.impactCategory === "callback" || item.ownerRole === "nurse") && item.slaRisk !== "Low" && exposed(item)).length,
+    reimbursement: items.filter((item) => item.impactCategory === "reimbursement" && exposed(item)).length,
+    pharmacy: items.filter((item) => item.impactCategory === "pharmacy" && item.sameDayCutoff && exposed(item)).length,
+  };
+};
+
+export const buildOpsManagerNote = (
+  planned: PlannedOpsWorkItem[],
+  state: OpsPlanState,
+  before: OpsMetricCounts,
+  after: OpsMetricCounts,
+): string => {
+  const rolePressure = opsRoles
+    .map((role) => {
+      const demand = planned.filter((item) => item.ownerRole === role.id && item.routeState !== "Blocked").length;
+      return { label: role.laneLabel, gap: demand - (state.capacity[role.id] || 0) };
+    })
+    .sort((a, b) => b.gap - a.gap)[0];
+  const pressureSentence =
+    rolePressure && rolePressure.gap > 0
+      ? `${rolePressure.label} is the main capacity pressure.`
+      : "Capacity is balanced across the open lanes.";
+  return (
+    `With current staffing, therapy-start risk drops from ${before.therapyStartRisk} to ${after.therapyStartRisk}. ` +
+    `${pressureSentence} Keep one same-day nurse slot protected when first-dose support is still open.`
+  );
+};

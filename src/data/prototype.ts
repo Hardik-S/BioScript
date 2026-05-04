@@ -64,6 +64,13 @@ export interface AuditMetric {
   delta: string;
 }
 
+export interface MinimumCaseCriterion {
+  criterion: string;
+  sourceEvidence: string;
+  confidence: FieldConfidence;
+  reviewerStatus: string;
+}
+
 export interface PrototypeContent {
   title: string;
   subtitle: string;
@@ -73,6 +80,7 @@ export interface PrototypeContent {
   extractionRuns: ExtractionRun[];
   workflow: WorkflowStep[];
   intakeFields: IntakeField[];
+  minimumCaseCriteria: MinimumCaseCriterion[];
   queue: ReviewerQueueItem[];
   followUp: FollowUpItem[];
   handoff: HandoffPacket;
@@ -82,7 +90,7 @@ export interface PrototypeContent {
 export const prototypeContent: PrototypeContent = {
   title: "Safety Intake Desk",
   subtitle:
-    "AI-assisted first-mile intake: turn messy source text into a review-ready safety case draft.",
+    "Structured intake drafting aid: preserve source text, flag missing facts, and prepare a PV-owner review packet.",
   patientContext: {
     program: "Oncology Support Program (Pilot)",
     patientRef: "PAT-REDACTED-1042",
@@ -109,7 +117,7 @@ export const prototypeContent: PrototypeContent = {
     {
       id: "queue",
       label: "Reviewer Queue",
-      note: "Route by seriousness and confidence into PV review.",
+      note: "Flag urgency cues and route to PV queue; PV confirms seriousness and reportability.",
     },
     {
       id: "followup",
@@ -119,7 +127,7 @@ export const prototypeContent: PrototypeContent = {
     {
       id: "handoff",
       label: "Handoff Ready",
-      note: "Generate export packet and handoff metadata.",
+      note: "Preview handoff packet contents and reviewer-status metadata.",
     },
     {
       id: "audit",
@@ -297,6 +305,32 @@ export const prototypeContent: PrototypeContent = {
       placeholder: "Operational notes for reviewer",
     },
   ],
+  minimumCaseCriteria: [
+    {
+      criterion: "Identifiable patient",
+      sourceEvidence: "PAT-REDACTED-1042 / John D appears in source context.",
+      confidence: "medium",
+      reviewerStatus: "PV owner validates whether patient identity is sufficient.",
+    },
+    {
+      criterion: "Identifiable reporter/source",
+      sourceEvidence: "Field nurse RN-77 and inbound call source are captured.",
+      confidence: "medium",
+      reviewerStatus: "PV owner confirms source/reporting relationship.",
+    },
+    {
+      criterion: "Suspect product",
+      sourceEvidence: "BIO-IMM-21 is extracted with uncertainty flags when source text is ambiguous.",
+      confidence: "high",
+      reviewerStatus: "PV owner confirms product normalization before handoff.",
+    },
+    {
+      criterion: "Adverse event/reaction",
+      sourceEvidence: "Chest tightness, dizziness, and nausea are preserved from source narrative.",
+      confidence: "high",
+      reviewerStatus: "PV owner confirms validity, seriousness, and reportability outside this demo.",
+    },
+  ],
   queue: [
     {
       caseId: "AE-2026-0431",
@@ -334,10 +368,10 @@ export const prototypeContent: PrototypeContent = {
       status: "In progress",
     },
     {
-      owner: "Reviewer",
-      task: "Seriousness classification check",
+      owner: "PV owner",
+      task: "PV owner seriousness review",
       due: "Today 17:30 ET",
-      status: "Closed",
+      status: "Open",
     },
   ],
   handoff: {
@@ -347,30 +381,30 @@ export const prototypeContent: PrototypeContent = {
       "Structured case payload",
       "Verbatim reporter notes",
       "Timeline + follow-up log",
-      "Seriousness triage record",
+      "Reviewer-status metadata and uncertainty flags",
     ],
-    exportState: "Queued for secure transfer",
+    exportState: "Static transfer preview only; no transfer occurs",
   },
   metrics: [
     {
-      label: "Draft completion rate",
-      value: "93%",
-      delta: "+8% vs pilot week 1",
+      label: "Minimum-field completeness",
+      value: "Pilot target: >=95%",
+      delta: "Baseline to be measured before pilot",
     },
     {
-      label: "Median intake-to-review",
-      value: "27 min",
-      delta: "-11 min week-over-week",
+      label: "Intake-to-review queue time",
+      value: "Example threshold: <=1 hour for urgent cues",
+      delta: "PV owner confirms seriousness and reportability",
     },
     {
       label: "Follow-up closure <24h",
-      value: "82%",
-      delta: "+6% this week",
+      value: "Pilot target: >=80%",
+      delta: "Measured after baseline, not a current result",
     },
     {
       label: "Queue >2h (high priority)",
-      value: "0 cases",
-      delta: "stable",
+      value: "Example threshold: 0 unresolved urgent-cue items",
+      delta: "Requires pilot baseline and SOP-defined clock handling",
     },
   ],
 };

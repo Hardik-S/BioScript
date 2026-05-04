@@ -26,7 +26,7 @@ interface CaseStudyContent {
 export const caseStudyContent: CaseStudyContent = {
   productName: "Safety Intake Desk",
   tagline:
-    "A thin internal workflow that captures potential adverse events at first contact and routes audit-ready handoff packages to qualified reviewers.",
+    "A thin internal workflow that captures potential adverse events at first contact and prepares source-backed handoff packets for qualified reviewers.",
   audience: "BioScript hiring manager and program leadership",
   valueStatement:
     "This MVP is intentionally narrow: improve first-mile intake quality, reviewer speed, and handoff reliability without pretending to replace a full pharmacovigilance platform.",
@@ -58,7 +58,7 @@ export const caseStudyContent: CaseStudyContent = {
     {
       title: "Compliance-aware architecture",
       detail:
-        "Use SSO, program-scoped access, field masking, and export-based handoff to fit sensitive-data workflows without forcing a core system rewrite.",
+        "Future production controls would need SSO, role-based access, field masking, validation, SOP alignment, and QA approval before any real pilot.",
     },
   ],
   timeline: [
@@ -91,23 +91,23 @@ export const caseStudyContent: CaseStudyContent = {
   kpis: [
     {
       label: "Minimum-field completeness",
-      value: ">=95%",
-      note: "Share of intake cases containing required reporter, patient, product, and reaction fields at handoff.",
+      value: "Pilot target: >=95%",
+      note: "Baseline to be measured before pilot; tracks required reporter, patient, product, and reaction evidence at handoff.",
     },
     {
       label: "Reviewer assignment speed",
-      value: "<=1 hour serious, <=1 business day non-serious",
-      note: "Measures queue responsiveness and urgency routing performance.",
+      value: "Example threshold: <=1 hour urgent cues, <=1 business day routine queue",
+      note: "PV owner confirms seriousness and reportability; the demo only measures routing responsiveness.",
     },
     {
       label: "Duplicate handoff rate",
-      value: "<5%",
-      note: "Tracks data hygiene before downstream transfer.",
+      value: "Pilot target: <5%",
+      note: "Baseline to be measured before pilot; duplicate status remains a PV-owner decision.",
     },
     {
       label: "Eligible-user adoption",
-      value: ">=80%",
-      note: "Confirms the workflow is being used when events are eligible for intake.",
+      value: "Pilot target: >=80%",
+      note: "Example threshold for whether trained users choose the intake flow when capture is in scope.",
     },
   ],
   prototypeStates: [
@@ -168,10 +168,11 @@ export const caseStudyContent: CaseStudyContent = {
     },
   ],
   deliveryPrinciples: [
-    "KISS: one program, one primary intake channel, one workflow slice.",
-    "YAGNI: no full PV platform features in v1.",
-    "DRY: one intake model reused across queue, tasks, export, and reporting.",
-    "SOLID: separate intake capture, review decisions, tasking, and metrics into clear workflow responsibilities.",
+    "Narrow pilot scope: one program, one primary intake channel, one workflow slice.",
+    "Procedure fit: no production use without SOP mapping, training, privacy review, and QA approval.",
+    "Reviewer burden reduction: capture missing facts earlier without moving safety decisions out of qualified review.",
+    "Handoff evidence: preserve source snippets, timestamps, uncertainty flags, and reviewer-status metadata.",
+    "Audit-ready status history: show ownership, due windows, and closure notes for review and process exceptions.",
   ],
   emailBlurb:
     "Safety Intake Desk is a product-scoped MVP for BioScript that improves first-mile adverse-event intake and reviewer handoff quality in 12-16 weeks, without a core-system rewrite.",

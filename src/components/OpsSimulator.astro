@@ -1,19 +1,29 @@
 ---
 import {
+  buildOpsManagerNote,
+  buildOpsPlan,
   defaultCapacity,
+  defaultOpsPlanState,
+  getOpsMetricCounts,
+  getOpsCapacityForScenario,
+  laneLabel,
   opsRoles,
   opsScenarios,
-  opsWorkItems,
+  opsStateLabels,
   triageStrategies,
 } from "@/data/opsSimulator";
 
-const clientConfig = {
-  defaultCapacity,
-  roles: opsRoles,
-  scenarios: opsScenarios,
-  strategies: triageStrategies,
-  workItems: opsWorkItems,
+const defaultPlanState = {
+  ...defaultOpsPlanState,
+  capacity: getOpsCapacityForScenario(defaultOpsPlanState.scenarioId),
+  rules: { ...defaultOpsPlanState.rules },
 };
+const defaultPlan = buildOpsPlan(defaultPlanState);
+const defaultBefore = getOpsMetricCounts(defaultPlan.planned, false);
+const defaultAfter = getOpsMetricCounts(defaultPlan.planned, true);
+const defaultSelected = defaultPlan.planned[0];
+const defaultManagerNote = buildOpsManagerNote(defaultPlan.planned, defaultPlanState, defaultBefore, defaultAfter);
+const stripDate = (value: string) => value.replace("2026-04-20 ", "");
 ---
 
 <section class="ops-demo" id="ops-simulator" aria-labelledby="ops-title">
@@ -37,11 +47,19 @@ const clientConfig = {
     </span>
   </aside>
 
+  <aside class="demo-boundary bridge-note panel" aria-label="Operations bridge note">
+    <strong>Why this belongs here</strong>
+    <span>
+      This third demo is intentionally adjacent to PV. It shows same-day PSP operating judgment and workload
+      prioritization, not clinical, reimbursement, or safety decision automation.
+    </span>
+  </aside>
+
   <div class="snapshot-grid" aria-label="Morning load snapshot">
     <article class="snapshot-card panel">
       <span>Open work</span>
-      <strong data-total-work>12</strong>
-      <small data-scenario-note>One PSP-style program, one operating day.</small>
+      <strong data-total-work>{defaultPlan.planned.length}</strong>
+      <small data-scenario-note>{defaultPlan.scenario.note}</small>
     </article>
     <article class="snapshot-card panel">
       <span>Role lanes</span>
@@ -58,19 +76,19 @@ const clientConfig = {
   <div class="metric-grid" aria-label="Patient-support impact metrics">
     <article class="metric-card panel">
       <span>Therapy starts at risk</span>
-      <strong><b data-metric="therapyStartRiskBefore">0</b> -> <b data-metric="therapyStartRiskAfter">0</b></strong>
+      <strong><b data-metric="therapyStartRiskBefore">{defaultBefore.therapyStartRisk}</b> -> <b data-metric="therapyStartRiskAfter">{defaultAfter.therapyStartRisk}</b></strong>
     </article>
     <article class="metric-card panel">
       <span>Callback SLA risk</span>
-      <strong><b data-metric="callbackRiskBefore">0</b> -> <b data-metric="callbackRiskAfter">0</b></strong>
+      <strong><b data-metric="callbackRiskBefore">{defaultBefore.callbackRisk}</b> -> <b data-metric="callbackRiskAfter">{defaultAfter.callbackRisk}</b></strong>
     </article>
     <article class="metric-card panel">
       <span>Reimbursement blockers</span>
-      <strong><b data-metric="reimbursementBefore">0</b> -> <b data-metric="reimbursementAfter">0</b></strong>
+      <strong><b data-metric="reimbursementBefore">{defaultBefore.reimbursement}</b> -> <b data-metric="reimbursementAfter">{defaultAfter.reimbursement}</b></strong>
     </article>
     <article class="metric-card panel">
       <span>Pharmacy cutoff risk</span>
-      <strong><b data-metric="pharmacyBefore">0</b> -> <b data-metric="pharmacyAfter">0</b></strong>
+      <strong><b data-metric="pharmacyBefore">{defaultBefore.pharmacy}</b> -> <b data-metric="pharmacyAfter">{defaultAfter.pharmacy}</b></strong>
     </article>
   </div>
 
@@ -165,11 +183,9 @@ const clientConfig = {
       </div>
 
       <div class="bucket-strip" aria-label="Routing state counts">
-        <span>Do now <b data-state-count="Do now">0</b></span>
-        <span>Schedule next <b data-state-count="Schedule next">0</b></span>
-        <span>Blocked <b data-state-count="Blocked">0</b></span>
-        <span>At risk <b data-state-count="At risk">0</b></span>
-        <span>Deferred <b data-state-count="Deferred">0</b></span>
+        {opsStateLabels.map((label) => (
+          <span>{label} <b data-state-count={label}>{defaultPlan.planned.filter((item) => item.routeState === label).length}</b></span>
+        ))}
       </div>
 
       <div class="queue-table-wrap">
@@ -182,7 +198,22 @@ const clientConfig = {
               <th>Plan</th>
             </tr>
           </thead>
-          <tbody data-queue-body></tbody>
+          <tbody data-queue-body>
+            {defaultPlan.planned.map((item) => (
+              <tr class:list={[item.id === defaultSelected?.id && "is-selected"]}>
+                <td>
+                  <button type="button" class="queue-select" data-work-id={item.id}>
+                    <strong>{item.id}</strong>
+                    <span>{item.workType}</span>
+                    <small>{item.patientImpact}</small>
+                  </button>
+                </td>
+                <td>{laneLabel(item.ownerRole)}</td>
+                <td>{stripDate(item.dueAt)}</td>
+                <td><span class="state-chip" data-state={item.routeState}>{item.routeState}</span></td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
     </div>
@@ -190,41 +221,45 @@ const clientConfig = {
     <aside class="detail-panel panel" aria-live="polite" aria-labelledby="detail-title">
       <div class="panel-title">
         <p class="kicker">Selected item</p>
-        <h2 id="detail-title" data-detail-work>Work item</h2>
+        <h2 id="detail-title" data-detail-work>{defaultSelected?.workType}</h2>
       </div>
       <div class="detail-status">
-        <span data-detail-id>OPS-000</span>
-        <strong data-detail-state>Waiting</strong>
+        <span data-detail-id>{defaultSelected?.id}</span>
+        <strong data-detail-state>{defaultSelected?.routeState}</strong>
       </div>
       <dl class="detail-grid">
         <div>
           <dt>Patient reference</dt>
-          <dd data-detail-patient>--</dd>
+          <dd data-detail-patient>{defaultSelected?.patientRef}</dd>
         </div>
         <div>
           <dt>Program</dt>
-          <dd data-detail-program>--</dd>
+          <dd data-detail-program>{defaultSelected?.program}</dd>
         </div>
         <div>
           <dt>Owner role</dt>
-          <dd data-detail-role>--</dd>
+          <dd data-detail-role>{defaultSelected ? laneLabel(defaultSelected.ownerRole) : "--"}</dd>
         </div>
         <div>
           <dt>Due window</dt>
-          <dd data-detail-due>--</dd>
+          <dd data-detail-due>{defaultSelected?.dueAt}</dd>
         </div>
         <div>
           <dt>Dependency</dt>
-          <dd data-detail-dependency>--</dd>
+          <dd data-detail-dependency>{defaultSelected?.dependency || "No external dependency"}</dd>
         </div>
         <div>
           <dt>Patient-impact cue</dt>
-          <dd data-detail-impact>--</dd>
+          <dd data-detail-impact>{defaultSelected?.patientImpact}</dd>
         </div>
       </dl>
       <div class="routing-note">
         <strong>Routing explanation</strong>
-        <ul data-detail-reasons></ul>
+        <ul data-detail-reasons>
+          {defaultSelected && [defaultSelected.decisionReason, ...defaultSelected.reasons, "Not a clinical decision; program owner can override."].slice(0, 4).map((reason) => (
+            <li>{reason}</li>
+          ))}
+        </ul>
       </div>
     </aside>
   </section>
@@ -235,7 +270,11 @@ const clientConfig = {
         <p class="kicker">Decision log</p>
         <h2>Why the top work moved first</h2>
       </div>
-      <ol data-decision-log></ol>
+      <ol data-decision-log>
+        {defaultPlan.planned.slice(0, 5).map((item) => (
+          <li><strong>{item.id} - {item.routeState}</strong><span>{item.reasons[0] || item.decisionReason}</span></li>
+        ))}
+      </ol>
     </article>
 
     <article class="manager-note panel">
@@ -243,12 +282,35 @@ const clientConfig = {
         <p class="kicker">Manager briefing</p>
         <h2>Operational tradeoff</h2>
       </div>
-      <p data-manager-note></p>
+      <p data-manager-note>{defaultManagerNote}</p>
     </article>
   </section>
 </section>
 
-<script is:inline define:vars={{ clientConfig }}>
+<script>
+  // @ts-nocheck
+  import {
+    buildOpsManagerNote,
+    buildOpsPlan,
+    defaultCapacity,
+    getOpsCapacityForScenario,
+    getOpsMetricCounts,
+    laneLabel as getLaneLabel,
+    opsRoles,
+    opsScenarios,
+    opsStateLabels,
+    opsWorkItems,
+    roleLabel as getRoleLabel,
+    triageStrategies,
+  } from "../data/opsSimulator";
+
+  const clientConfig = {
+    defaultCapacity,
+    roles: opsRoles,
+    scenarios: opsScenarios,
+    strategies: triageStrategies,
+    workItems: opsWorkItems,
+  };
   const root = document.getElementById("ops-simulator");
 
   if (root) {
@@ -258,13 +320,13 @@ const clientConfig = {
     const strategyMap = new Map(clientConfig.strategies.map((strategy) => [strategy.id, strategy]));
     const today = "2026-04-20";
     const tomorrow = "2026-04-21";
-    const stateLabels = ["Do now", "Schedule next", "Blocked", "At risk", "Deferred"];
+    const stateLabels = opsStateLabels;
 
     const state = {
       scenarioId: "normalMonday",
       strategyId: "therapyStartFirst",
       selectedId: null,
-      capacity: { ...clientConfig.defaultCapacity },
+      capacity: getOpsCapacityForScenario("normalMonday"),
       rules: {
         protectStarts: true,
         holdBlocked: true,
@@ -288,8 +350,8 @@ const clientConfig = {
       return Boolean(scenario.delayedDependencies?.includes(item.dependency));
     };
 
-    const roleLabel = (roleId) => roleMap.get(roleId)?.label || roleId;
-    const laneLabel = (roleId) => roleMap.get(roleId)?.laneLabel || roleLabel(roleId);
+    const roleLabel = (roleId) => getRoleLabel(roleId);
+    const laneLabel = (roleId) => getLaneLabel(roleId);
 
     const getActiveItems = () => {
       const scenario = scenarioMap.get(state.scenarioId);
@@ -297,10 +359,8 @@ const clientConfig = {
     };
 
     const resetScenarioCapacity = () => {
-      const scenario = scenarioMap.get(state.scenarioId);
+      state.capacity = getOpsCapacityForScenario(state.scenarioId);
       clientConfig.roles.forEach((role) => {
-        const adjustment = scenario.capacityAdjustments?.[role.id] || 0;
-        state.capacity[role.id] = Math.max(0, clientConfig.defaultCapacity[role.id] + adjustment);
         const input = query(`[data-capacity-role="${role.id}"]`);
         if (input) input.value = state.capacity[role.id];
       });
@@ -381,55 +441,11 @@ const clientConfig = {
     };
 
     const buildPlan = () => {
-      const scenario = scenarioMap.get(state.scenarioId);
-      const activeItems = getActiveItems();
-      const scored = activeItems
-        .map((item) => ({
-          ...item,
-          ...scoreItem(item, scenario, activeItems),
-          blockedNow: state.rules.holdBlocked && (item.status === "Blocked" || isDependencyDelayed(item, scenario)),
-        }))
-        .sort((a, b) => b.score - a.score || dueMinutes(a.dueAt) - dueMinutes(b.dueAt));
-
-      const usedCapacity = Object.fromEntries(clientConfig.roles.map((role) => [role.id, 0]));
-      const planned = scored.map((item) => {
-        let routeState = "Deferred";
-        const capacity = state.capacity[item.ownerRole] || 0;
-        const nurseReserveApplies =
-          state.rules.reserveNurse &&
-          item.ownerRole === "nurse" &&
-          !isProtectedStart(item) &&
-          capacity - usedCapacity[item.ownerRole] <= 1;
-
-        if (item.blockedNow) {
-          routeState = "Blocked";
-        } else if (usedCapacity[item.ownerRole] < capacity && !nurseReserveApplies) {
-          routeState = "Do now";
-          usedCapacity[item.ownerRole] += 1;
-        } else if (item.slaRisk === "High" || isProtectedStart(item) || item.sameDayCutoff) {
-          routeState = "At risk";
-        } else if (!item.isRoutine && item.slaRisk === "Medium") {
-          routeState = "Schedule next";
-        }
-
-        if (item.isRoutine && routeState !== "Do now") {
-          routeState = "Deferred";
-        }
-
-        return { ...item, routeState };
-      });
-
-      return { planned, scenario };
+      return buildOpsPlan(state);
     };
 
     const metricCounts = (items, after = false) => {
-      const exposed = (item) => !after || ["At risk", "Blocked", "Deferred"].includes(item.routeState);
-      return {
-        therapyStartRisk: items.filter((item) => isProtectedStart(item) && exposed(item)).length,
-        callbackRisk: items.filter((item) => (item.impactCategory === "callback" || item.ownerRole === "nurse") && item.slaRisk !== "Low" && exposed(item)).length,
-        reimbursement: items.filter((item) => item.impactCategory === "reimbursement" && exposed(item)).length,
-        pharmacy: items.filter((item) => item.impactCategory === "pharmacy" && item.sameDayCutoff && exposed(item)).length,
-      };
+      return getOpsMetricCounts(items, after);
     };
 
     const setText = (selector, text) => {
@@ -499,20 +515,7 @@ const clientConfig = {
     };
 
     const renderManagerNote = (planned, before, after) => {
-      const rolePressure = clientConfig.roles
-        .map((role) => {
-          const demand = planned.filter((item) => item.ownerRole === role.id && item.routeState !== "Blocked").length;
-          return { label: role.laneLabel, gap: demand - (state.capacity[role.id] || 0) };
-        })
-        .sort((a, b) => b.gap - a.gap)[0];
-      const pressureSentence =
-        rolePressure && rolePressure.gap > 0
-          ? `${rolePressure.label} is the main capacity pressure.`
-          : "Capacity is balanced across the open lanes.";
-      const note =
-        `With current staffing, therapy-start risk drops from ${before.therapyStartRisk} to ${after.therapyStartRisk}. ` +
-        `${pressureSentence} Keep one same-day nurse slot protected when first-dose support is still open.`;
-      setText("[data-manager-note]", note);
+      setText("[data-manager-note]", buildOpsManagerNote(planned, state, before, after));
     };
 
     const render = () => {

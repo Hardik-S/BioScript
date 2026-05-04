@@ -1,5 +1,5 @@
 ---
-import { reconciliationRecords, reconciliationSummary } from "@/data/reconciliation";
+import { exceptionDispositions, reconciliationRecords, reconciliationSummary } from "@/data/reconciliation";
 
 const flaggedRecords = reconciliationRecords.filter((record) => record.status !== "Clean");
 const sourceRows = reconciliationRecords.map((record) => ({
@@ -55,6 +55,39 @@ const clientRecords = reconciliationRecords.map((record) => ({
     </div>
     <button type="button" class="run-control" data-action="run-control">Run Control</button>
   </div>
+
+  <section class="exception-disposition panel" aria-labelledby="exception-disposition-title">
+    <div class="panel-title">
+      <p class="kicker">Exception disposition</p>
+      <h2 id="exception-disposition-title">Owned actions for traceable closure</h2>
+    </div>
+    <div class="disposition-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Exception</th>
+            <th>Source evidence</th>
+            <th>Owner</th>
+            <th>Due window</th>
+            <th>Required disposition</th>
+            <th>Closure note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {exceptionDispositions.map((item) => (
+            <tr>
+              <td>{item.exception}</td>
+              <td>{item.sourceEvidence}</td>
+              <td>{item.owner}</td>
+              <td>{item.dueWindow}</td>
+              <td>{item.requiredDisposition}</td>
+              <td>{item.closureNote}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
 
   <p class="control-status" data-control-status>
     Control has not run yet. The ledgers below are synthetic and static.
@@ -574,6 +607,40 @@ const clientRecords = reconciliationRecords.map((record) => ({
     justify-content: space-between;
     gap: 1rem;
     padding: 1.2rem;
+  }
+
+  .exception-disposition {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1rem;
+  }
+
+  .disposition-table-wrap {
+    overflow-x: auto;
+  }
+
+  .exception-disposition table {
+    width: 100%;
+    min-width: 56rem;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+  }
+
+  .exception-disposition th,
+  .exception-disposition td {
+    padding: 0.55rem 0.45rem;
+    border-bottom: 1px solid var(--color-line);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .exception-disposition th {
+    color: var(--color-text);
+    font-family: var(--font-ui);
+  }
+
+  .exception-disposition td:first-child {
+    font-weight: 700;
   }
 
   .control-bar p,

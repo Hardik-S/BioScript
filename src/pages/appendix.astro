@@ -2,7 +2,7 @@
 import SectionHeading from "@/components/SectionHeading.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { appendixSections, demoAppendixSections, riskRegister } from "@/content/appendix";
+import { appendixSections, demoAppendixSections, limitationSections, managerQuestions, riskRegister } from "@/content/appendix";
 import { getPrimaryNav } from "@/content/navigation";
 
 const title = "Safety Intake Desk Appendix";
@@ -67,6 +67,29 @@ const nav = getPrimaryNav("appendix", baseUrl);
           </article>
         ))}
       </div>
+
+      <section class="panel manager-questions">
+        <h2>Manager Questions Answered</h2>
+        <div class="qa-grid">
+          {managerQuestions.map((item) => (
+            <article>
+              <h3>{item.question}</h3>
+              <p>{item.answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section class="limitation-grid" aria-label="Static demo limits and pilot controls">
+        {limitationSections.map((section) => (
+          <article class="panel appendix-panel">
+            <h2>{section.title}</h2>
+            <ul>
+              {section.points.map((point) => <li>{point}</li>)}
+            </ul>
+          </article>
+        ))}
+      </section>
 
       <section class="panel risk-panel">
         <h2>Execution risks I would manage explicitly</h2>
@@ -156,17 +179,20 @@ const nav = getPrimaryNav("appendix", baseUrl);
   }
 
   .appendix-grid,
+  .limitation-grid,
   .risk-grid {
     display: grid;
     gap: 1rem;
   }
 
-  .appendix-grid {
+  .appendix-grid,
+  .limitation-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .appendix-panel,
   .demo-appendix-card,
+  .manager-questions,
   .risk-panel,
   .note-panel {
     padding: 1.5rem;
@@ -174,8 +200,10 @@ const nav = getPrimaryNav("appendix", baseUrl);
 
   .appendix-panel h2,
   .demo-appendix-card h2,
+  .manager-questions h2,
   .risk-panel h2,
   .note-panel h2,
+  .qa-grid h3,
   .risk-grid h3 {
     margin: 0;
   }
@@ -239,6 +267,7 @@ const nav = getPrimaryNav("appendix", baseUrl);
   .appendix-panel li,
   .demo-appendix-card dd,
   .demo-appendix-card li,
+  .manager-questions p,
   .risk-grid p,
   .note-panel p {
     color: var(--color-text-soft);
@@ -267,6 +296,25 @@ const nav = getPrimaryNav("appendix", baseUrl);
     margin-top: 1rem;
   }
 
+  .qa-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .qa-grid article {
+    padding: 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    background: var(--pill-fill);
+  }
+
+  .qa-grid h3 {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
   .risk-grid article {
     padding: 1rem;
     border: 1px solid var(--color-line);
@@ -284,6 +332,8 @@ const nav = getPrimaryNav("appendix", baseUrl);
   @media (max-width: 980px) {
     .demo-appendix-grid,
     .appendix-grid,
+    .limitation-grid,
+    .qa-grid,
     .risk-grid {
       grid-template-columns: 1fr;
     }

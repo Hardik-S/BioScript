@@ -21,7 +21,7 @@ export const demoAppendixSections = [
   {
     id: "reconciliation",
     navLabel: "Reconciliation",
-    title: "Ghost-Case Reconciliation Drill",
+    title: "Safety Case Reconciliation Control",
     routeLabel: "Control demo",
     href: (baseUrl: string) => `${baseUrl}Next/`,
     purpose:
@@ -84,8 +84,93 @@ export const appendixSections: AppendixSection[] = [
   {
     title: "Pilot delivery assumptions",
     intro:
-      "A 12 to 16 week pilot remains realistic only if the architecture stays honest, the scope stays narrow, and success is measured tightly.",
+      "A 12 to 16 week pilot is an assumption, contingent on scope, QA/privacy review, SOP fit, and stakeholder availability.",
     points: caseStudyContent.kpis.map((metric) => `${metric.label}: ${metric.value}. ${metric.note}`),
+  },
+];
+
+export const managerQuestions = [
+  {
+    question: "Who owns day-0 clock assessment?",
+    answer:
+      "The static demo does not confirm day 0. A qualified PV owner confirms minimum criteria and decides clock handling under the applicable SOP.",
+  },
+  {
+    question: "Which fields are minimum criteria versus enrichment?",
+    answer:
+      "Minimum criteria are identifiable patient, identifiable reporter/source, suspect product, and adverse event/reaction. Onset, concomitant meds, seriousness cues, and notes are follow-up enrichment until reviewed.",
+  },
+  {
+    question: "Who can mark a field trusted for handoff?",
+    answer:
+      "Frontline users capture source text, coordinators flag missing facts, and qualified PV/Quality owners confirm validity, seriousness, duplicate status, reportability, and submission decisions.",
+  },
+  {
+    question: "What source text is preserved?",
+    answer:
+      "The handoff packet preserves verbatim source snippets, timestamps, field-level uncertainty, reviewer-status metadata, and follow-up history.",
+  },
+  {
+    question: "How are safety decisions kept out of automation?",
+    answer:
+      "The demo can flag urgency cues and prepare evidence. It does not assess seriousness, expectedness, causality, duplicate status, reportability, or submission decisions.",
+  },
+  {
+    question: "What happens when acknowledgement is missing or late?",
+    answer:
+      "The reconciliation control creates an owned exception with evidence, due window, required disposition, and closure note for PV operations or PV-owner review.",
+  },
+  {
+    question: "What is the pilot stop, iterate, or expand rule?",
+    answer:
+      "Stop if reviewer burden rises or minimum-criteria quality does not improve; iterate if labels/SOP fit need tuning; expand only after baseline-to-target evidence and QA/privacy approval.",
+  },
+  {
+    question: "What does this static demo not prove?",
+    answer:
+      "It does not prove production validation, integration reliability, privacy controls, SOP approval, training completion, real transfer, or downstream regulatory outcomes.",
+  },
+];
+
+export const limitationSections = [
+  {
+    title: "What This Demo Does Not Do",
+    points: [
+      "No real PHI or patient data.",
+      "No submissions, transfers, messages, or production-system updates.",
+      "No safety, clinical, reimbursement, causality, duplicate, or reportability decisions.",
+    ],
+  },
+  {
+    title: "Decision Ownership",
+    points: [
+      "Frontline user: captures source narrative and operational context.",
+      "Coordinator: flags missing facts and prepares follow-up tasks.",
+      "PV owner: confirms validity, seriousness, duplicate status, reportability, and any submission decision.",
+      "QA/manager: reviews SOP fit, audit/process exceptions, training, and pilot governance.",
+    ],
+  },
+  {
+    title: "Minimum Criteria And Clock Handling",
+    points: [
+      "The four minimum criteria are identifiable patient, identifiable reporter/source, suspect product, and adverse event/reaction.",
+      "Day 0 is not treated as confirmed by this demo; PV owner validates minimum criteria and clock handling.",
+    ],
+  },
+  {
+    title: "Pilot Evidence Plan",
+    points: [
+      "Baseline: measure current completeness, reviewer rework, cycle time, and acknowledgement exceptions before pilot.",
+      "Target: compare against minimum-field completeness, queue responsiveness, duplicate handoff rate, and trained-user adoption thresholds.",
+      "Failure threshold: stop or redesign if reviewer burden rises, uncertainty is hidden, or SOP/QA fit is not defensible.",
+    ],
+  },
+  {
+    title: "Static Demo Limitations",
+    points: [
+      "All data is synthetic/redacted and all actions are simulated.",
+      "Production would require validation, privacy/security review, role-based access, SOP alignment, training, and change control.",
+    ],
   },
 ];
 

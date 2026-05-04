@@ -52,10 +52,10 @@ const extractionRuns = prototypeContent.extractionRuns;
 
         <section class="panel panel-intake" data-stage="intake">
           <div class="panel-head">
-            <h3>AI-Assisted Intake</h3>
+            <h3>Structured Intake Draft</h3>
             <p>
-              Start with unstructured source material. The model drafts a structured intake case,
-              and reviewers confirm low-confidence fields before handoff.
+              Start with unstructured source material. The demo drafts intake fields from source text,
+              and qualified reviewers confirm low-confidence or safety-relevant fields before handoff.
             </p>
           </div>
 
@@ -76,7 +76,7 @@ const extractionRuns = prototypeContent.extractionRuns;
           <form class="intake-form" id="prototype-intake-form" novalidate>
             <div class="panel-subhead">
               <h4>Extracted intake draft</h4>
-              <p>Review model-populated data and confirm uncertain fields before handoff.</p>
+              <p>Review draft data and confirm uncertain fields before handoff.</p>
             </div>
             {
               prototypeContent.intakeFields.map((field) => (
@@ -128,11 +128,42 @@ const extractionRuns = prototypeContent.extractionRuns;
           </form>
         </section>
 
+        <section class="panel minimum-criteria-panel" aria-labelledby="minimum-criteria-title">
+          <div class="panel-subhead">
+            <h3 id="minimum-criteria-title">Minimum Case Criteria</h3>
+            <p>
+              Day-0 clock is not treated as confirmed by this demo. PV owner confirms whether minimum criteria are met.
+            </p>
+          </div>
+          <div class="criteria-table-wrap">
+            <table class="criteria-table">
+              <thead>
+                <tr>
+                  <th>Criterion</th>
+                  <th>Source evidence</th>
+                  <th>Confidence</th>
+                  <th>Reviewer status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {prototypeContent.minimumCaseCriteria.map((criterion) => (
+                  <tr>
+                    <td>{criterion.criterion}</td>
+                    <td>{criterion.sourceEvidence}</td>
+                    <td><span class={`confidence-badge ${criterion.confidence}`}>{criterion.confidence}</span></td>
+                    <td>{criterion.reviewerStatus}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <section class="panel stage-panel" data-stage="saved">
           <h3>Saved Incomplete State</h3>
           <p>
             Case is retained with timestamp, missing fields, and routed to reviewer queue with
-            "follow-up needed" status.
+            "follow-up needed" status. PV owner confirms validity, seriousness, duplicate status, and reportability.
           </p>
           <ul class="pills">
             <li>Case: AE-2026-0431</li>
@@ -939,6 +970,24 @@ const extractionRuns = prototypeContent.extractionRuns;
     color: #9a2525;
     border-color: #dda5a5;
     background: #feefef;
+  }
+
+  .minimum-criteria-panel {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .criteria-table-wrap {
+    overflow-x: auto;
+  }
+
+  .criteria-table th,
+  .criteria-table td {
+    vertical-align: top;
+  }
+
+  .criteria-table td:first-child {
+    font-weight: 700;
   }
 
   .review-flag {

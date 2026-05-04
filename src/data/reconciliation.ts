@@ -33,6 +33,15 @@ export interface ReconciliationRecord {
   escalationSummary: string;
 }
 
+export interface ExceptionDisposition {
+  exception: string;
+  sourceEvidence: string;
+  owner: string;
+  dueWindow: string;
+  requiredDisposition: string;
+  closureNote: string;
+}
+
 export const reconciliationRecords: ReconciliationRecord[] = [
   {
     caseId: "SID-2026-014",
@@ -203,9 +212,52 @@ export const reconciliationRecords: ReconciliationRecord[] = [
 ];
 
 export const reconciliationSummary = {
-  title: "Ghost-Case Reconciliation Drill",
+  title: "Safety Case Reconciliation Control",
   subtitle:
-    "A static control simulation that checks whether PSP safety records survived the handoff from first contact to external acknowledgement.",
+    "A static control simulation for source-to-acknowledgement evidence gaps.",
   guardrail:
     "This does not submit, invalidate, or decide reportability. It prepares evidence for a qualified PV owner.",
 };
+
+export const exceptionDispositions: ExceptionDisposition[] = [
+  {
+    exception: "No acknowledgement",
+    sourceEvidence: "Transfer exists, acknowledgement missing",
+    owner: "PV operations owner",
+    dueWindow: "Same business day",
+    requiredDisposition: "Confirm receipt or document escalation",
+    closureNote: "Record downstream receipt reference or escalation ticket before closing",
+  },
+  {
+    exception: "Late acknowledgement",
+    sourceEvidence: "Acknowledgement returned next business day",
+    owner: "PV operations owner",
+    dueWindow: "Next business day review",
+    requiredDisposition: "Document SLA reason and clock-handling decision",
+    closureNote: "Attach reason code and PV-owner clock assessment",
+  },
+  {
+    exception: "Invalid rejection",
+    sourceEvidence: "Source note contains patient-identifying evidence",
+    owner: "PV owner",
+    dueWindow: "Before case closure",
+    requiredDisposition: "Confirm validity decision or correct rejection reason",
+    closureNote: "Link source evidence to final validity disposition",
+  },
+  {
+    exception: "Causality trap",
+    sourceEvidence: "Report facts present despite reporter causality comment",
+    owner: "PV owner",
+    dueWindow: "Before cancellation acceptance",
+    requiredDisposition: "Confirm that causality comment does not erase intake record",
+    closureNote: "Record reviewer rationale and preserve verbatim source wording",
+  },
+  {
+    exception: "Duplicate review",
+    sourceEvidence: "Possible duplicate with separate source snippet",
+    owner: "PV owner",
+    dueWindow: "Before linkage closure",
+    requiredDisposition: "Confirm duplicate linkage or keep separate record",
+    closureNote: "Reference linked case ID and retained source evidence",
+  },
+];
