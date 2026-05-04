@@ -1,6 +1,54 @@
 import type { AppendixSection, RiskItem } from "@/types/content";
 import { caseStudyContent } from "@/content/caseStudy";
 
+export const demoBoundaryText =
+  "Static front-end demo using synthetic/redacted examples. It does not submit reports, decide validity, assess seriousness, determine reportability, send messages, or handle real patient data. Qualified PV/Quality owners remain responsible for all safety decisions.";
+
+export const shortVersionSections = [
+  {
+    id: "intake",
+    navLabel: "Intake",
+    title: "Safety Intake Desk",
+    summary:
+      "A narrow first-mile intake MVP: capture the initial safety signal cleanly, preserve incomplete drafts, surface missing minimum criteria, and hand qualified reviewers a clearer evidence packet.",
+    points: [
+      "Best proof: messy source notes become structured fields without hiding uncertainty.",
+      "Primary owner: frontline capture and coordinator follow-up, with PV owner confirmation before handoff.",
+      "Why it matters: less reconstruction work and fewer cases forced into false completion.",
+    ],
+    href: (baseUrl: string) => `${baseUrl}#prototype`,
+    ctaLabel: "Open Intake",
+  },
+  {
+    id: "reconciliation",
+    navLabel: "Reconciliation",
+    title: "Safety Case Reconciliation Control",
+    summary:
+      "A control surface for finding safety records that risk disappearing between source capture, transfer evidence, and downstream acknowledgement.",
+    points: [
+      "Best proof: source, transfer, and acknowledgement ledgers stay inspectable side by side.",
+      "Primary owner: PV operations or PV owner closes exceptions with evidence and disposition.",
+      "Why it matters: handoff reliability becomes visible instead of assumed.",
+    ],
+    href: (baseUrl: string) => `${baseUrl}Next/`,
+    ctaLabel: "Open Reconciliation",
+  },
+  {
+    id: "operations",
+    navLabel: "Operations",
+    title: "Care Operations Control Room",
+    summary:
+      "A manager-facing prioritization demo for one patient-support operating day, focused on workload, blockers, capacity, and same-day tradeoffs.",
+    points: [
+      "Best proof: synthetic work queues recompute into clear priority recommendations.",
+      "Primary owner: operations manager uses the view to decide what work should happen first.",
+      "Why it matters: it shows broader BioScript usefulness beyond safety intake alone.",
+    ],
+    href: (baseUrl: string) => `${baseUrl}Ops/`,
+    ctaLabel: "Open Operations",
+  },
+];
+
 export const demoAppendixSections = [
   {
     id: "intake",
@@ -133,6 +181,10 @@ export const managerQuestions = [
 ];
 
 export const limitationSections = [
+  {
+    title: "Demo Boundary",
+    points: [demoBoundaryText],
+  },
   {
     title: "What This Demo Does Not Do",
     points: [

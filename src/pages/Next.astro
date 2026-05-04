@@ -11,10 +11,15 @@ const pageDescription =
   "A front-end-only reconciliation simulation for Safety Intake Desk that proves PSP safety records do not disappear between source capture, transfer, and acknowledgement.";
 const baseUrl = import.meta.env.BASE_URL;
 const nav = getPrimaryNav("next", baseUrl);
+const brand = {
+  mark: "RC",
+  title: "Safety Case Reconciliation Control",
+  subtitle: "BioScript case-study MVP",
+};
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription} theme="reconciliation">
-  <SiteHeader nav={nav} />
+  <SiteHeader nav={nav} brand={brand} />
 
   <main>
     <div class="page-shell">

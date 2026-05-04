@@ -12,10 +12,15 @@ const pageDescription =
   "A product-led GitHub Pages case study for a focused BioScript MVP: Safety Intake Desk.";
 const baseUrl = import.meta.env.BASE_URL;
 const nav = getPrimaryNav("demo", baseUrl);
+const brand = {
+  mark: "SI",
+  title: "Safety Intake Desk",
+  subtitle: "BioScript case-study MVP",
+};
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription} theme="intake">
-  <SiteHeader nav={nav} />
+  <SiteHeader nav={nav} brand={brand} />
 
   <main>
     <section class="hero-block section-block">

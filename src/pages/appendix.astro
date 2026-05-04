@@ -2,17 +2,29 @@
 import SectionHeading from "@/components/SectionHeading.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { appendixSections, demoAppendixSections, limitationSections, managerQuestions, riskRegister } from "@/content/appendix";
+import {
+  appendixSections,
+  demoAppendixSections,
+  limitationSections,
+  managerQuestions,
+  riskRegister,
+  shortVersionSections,
+} from "@/content/appendix";
 import { getPrimaryNav } from "@/content/navigation";
 
 const title = "Safety Intake Desk Appendix";
 const description = "Supporting notes for the BioScript Safety Intake Desk case study.";
 const baseUrl = import.meta.env.BASE_URL;
 const nav = getPrimaryNav("appendix", baseUrl);
+const brand = {
+  mark: "AP",
+  title: "Appendix",
+  subtitle: "BioScript case-study MVP",
+};
 ---
 
 <BaseLayout title={title} description={description} theme="appendix">
-  <SiteHeader nav={nav} />
+  <SiteHeader nav={nav} brand={brand} />
 
   <main id="top" class="section-block">
     <div class="page-shell appendix-shell">
@@ -21,6 +33,46 @@ const nav = getPrimaryNav("appendix", baseUrl);
         title="Supporting detail for all three demos"
         lead="Use this page as the evidence map: what each demo is trying to prove, when to show it, and how the pieces fit together without crowding the live workflows."
       />
+
+      <section class="panel short-version-panel" aria-labelledby="short-version-title" data-short-version-panel>
+        <div class="short-version-head">
+          <div>
+            <p class="section-kicker">Manager readout</p>
+            <h2 id="short-version-title">Short version</h2>
+          </div>
+          <div class="short-version-tabs" role="tablist" aria-label="Short version demo selector">
+            {shortVersionSections.map((section, index) => (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={index === 0 ? "true" : "false"}
+                aria-controls={`short-version-${section.id}`}
+                class:list={[index === 0 && "is-active"]}
+                data-short-version-button={section.id}
+              >
+                {section.navLabel}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div class="short-version-body">
+          {shortVersionSections.map((section, index) => (
+            <article
+              id={`short-version-${section.id}`}
+              class:list={["short-version-section", index !== 0 && "is-hidden"]}
+              data-short-version-section={section.id}
+              role="tabpanel"
+            >
+              <h3>{section.title}</h3>
+              <p>{section.summary}</p>
+              <ul>
+                {section.points.map((point) => <li>{point}</li>)}
+              </ul>
+              <a class="cta-link secondary" href={section.href(baseUrl)}>{section.ctaLabel}</a>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <nav class="demo-subnav panel" aria-label="Appendix demo sections">
         <span>Demo notes</span>
@@ -103,28 +155,136 @@ const nav = getPrimaryNav("appendix", baseUrl);
         </div>
       </section>
 
-      <section class="panel note-panel">
-        <h2>Short version</h2>
-        <p>
-          Safety Intake Desk is a deliberately narrow MVP for first-mile adverse-event intake: capture the initial
-          signal cleanly, preserve incomplete drafts, route reviewer work visibly, and hand complete cases off without
-          pretending to replace the downstream PV system.
-        </p>
-        <div class="appendix-actions">
-          <a class="cta-link primary" href={`${baseUrl}#prototype`}>Open Intake</a>
-          <a class="cta-link secondary" href={`${baseUrl}Next/`}>Open Reconciliation</a>
-          <a class="cta-link secondary" href={`${baseUrl}Ops/`}>Open Operations</a>
-          <a class="cta-link secondary" href="#top">Back to top</a>
-        </div>
-      </section>
     </div>
   </main>
 </BaseLayout>
+
+<script is:inline>
+  const shortVersionPanel = document.querySelector("[data-short-version-panel]");
+
+  if (shortVersionPanel instanceof HTMLElement) {
+    shortVersionPanel.classList.add("is-enhanced");
+    const buttons = Array.from(shortVersionPanel.querySelectorAll("[data-short-version-button]"));
+    const sections = Array.from(shortVersionPanel.querySelectorAll("[data-short-version-section]"));
+
+    const activateSection = (id) => {
+      buttons.forEach((button) => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        const isActive = button.dataset.shortVersionButton === id;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+
+      sections.forEach((section) => {
+        if (!(section instanceof HTMLElement)) return;
+        section.classList.toggle("is-hidden", section.dataset.shortVersionSection !== id);
+      });
+    };
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        activateSection(button.dataset.shortVersionButton);
+      });
+    });
+  }
+</script>
 
 <style>
   .appendix-shell {
     display: grid;
     gap: 1.2rem;
+  }
+
+  .short-version-panel {
+    display: grid;
+    gap: 1.2rem;
+    padding: 1.5rem;
+  }
+
+  .short-version-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .section-kicker {
+    margin: 0 0 0.35rem;
+    color: var(--color-accent);
+    font-family: var(--font-ui);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .short-version-tabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    justify-content: flex-end;
+  }
+
+  .short-version-tabs button {
+    border: 1px solid var(--color-line-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-text-soft);
+    cursor: pointer;
+    font: 700 0.86rem/1 var(--font-ui);
+    padding: 0.58rem 0.76rem;
+    transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+  }
+
+  .short-version-tabs button:hover,
+  .short-version-tabs button:focus-visible,
+  .short-version-tabs button.is-active {
+    background: var(--color-accent);
+    color: var(--color-inverse);
+    transform: translateY(-1px);
+  }
+
+  .short-version-body {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .short-version-panel.is-enhanced .short-version-section.is-hidden {
+    display: none;
+  }
+
+  .short-version-section {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .short-version-section h3 {
+    margin: 0;
+    font-size: clamp(1.35rem, 2.2vw, 1.9rem);
+    line-height: 1.08;
+  }
+
+  .short-version-section p,
+  .short-version-section li {
+    color: var(--color-text-soft);
+    line-height: 1.75;
+  }
+
+  .short-version-section p,
+  .short-version-section ul {
+    margin: 0;
+  }
+
+  .short-version-section ul {
+    display: grid;
+    gap: 0.45rem;
+    padding-left: 1.1rem;
+  }
+
+  .short-version-section .cta-link {
+    justify-self: start;
+    margin-top: 0.2rem;
   }
 
   .demo-subnav {
@@ -193,8 +353,7 @@ const nav = getPrimaryNav("appendix", baseUrl);
   .appendix-panel,
   .demo-appendix-card,
   .manager-questions,
-  .risk-panel,
-  .note-panel {
+  .risk-panel {
     padding: 1.5rem;
   }
 
@@ -202,7 +361,7 @@ const nav = getPrimaryNav("appendix", baseUrl);
   .demo-appendix-card h2,
   .manager-questions h2,
   .risk-panel h2,
-  .note-panel h2,
+  .short-version-panel h2,
   .qa-grid h3,
   .risk-grid h3 {
     margin: 0;
@@ -268,8 +427,7 @@ const nav = getPrimaryNav("appendix", baseUrl);
   .demo-appendix-card dd,
   .demo-appendix-card li,
   .manager-questions p,
-  .risk-grid p,
-  .note-panel p {
+  .risk-grid p {
     color: var(--color-text-soft);
     line-height: 1.75;
   }
@@ -322,13 +480,6 @@ const nav = getPrimaryNav("appendix", baseUrl);
     background: rgba(250, 245, 237, 0.65);
   }
 
-  .appendix-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.8rem;
-    margin-top: 1rem;
-  }
-
   @media (max-width: 980px) {
     .demo-appendix-grid,
     .appendix-grid,
@@ -340,6 +491,14 @@ const nav = getPrimaryNav("appendix", baseUrl);
   }
 
   @media (max-width: 720px) {
+    .short-version-head {
+      flex-direction: column;
+    }
+
+    .short-version-tabs {
+      justify-content: flex-start;
+    }
+
     .demo-subnav {
       position: static;
       align-items: flex-start;
